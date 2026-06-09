@@ -33,44 +33,44 @@ export default function HomePage() {
       </section>
 
       {/* How it works */}
-      <section className="px-6 py-24 max-w-5xl mx-auto">
-        <div className="flex justify-center mb-4">
-          <span
-            className="text-center text-2xl font-bold uppercase tracking-[0.3em] font-mono mb-12 px-4 py-2 rounded-full border"
-            style={{ color: 'var(--vestige-stone)', borderColor: 'var(--vestige-stone)' }}
-          >
-            Decision Archaeology
-          </span>
-        </div>
-        <p className="text-center text-2xl font-bold uppercase tracking-[0.3em] font-mono mb-12" style={{ color: 'var(--vestige-stone)' }}>
-          How it works
-        </p>
-        <div className="grid md:grid-cols-3 gap-12 text-center">
-          {[
-            {
-              step: [1],
-              title: 'Ingest',
-              desc: 'Point Vestige at any Git repo. It reads your full commit history, diffs, PRs, and branch patterns — everything your team left behind.',
-            },
-            {
-              title: 'Trace',
-              desc: 'Every change is traced back to its origin. Vestige surfaces the decision, the context, and how confident the evidence is.',
-            },
-            {
-              step: [3],
-              title: 'Explain',
-              desc: 'Claude produces reports tailored to whoever is reading — so the why reaches everyone who needs it.',
-            },
-          ].map(({ step, title, desc }) => (
-            <div key={step} className="flex flex-col items-center gap-4">
-              <span className="font-mono text-4xl pb-3 font-bold" style={{ color: 'var(--vestige-crystal)' }}>
-                {title}
-              </span>
-              <p className="text-lg leading-relaxed" style={{ color: '#a09a94' }}>
-                {desc}
-              </p>
-            </div>
-          ))}
+      <section className="px-6 py-24" style={{ background: 'var(--background)' }}>
+        <div className="max-w-3xl mx-auto">
+          <p className="text-3xl md:text-4xl font-semibold uppercase tracking-[0.3em] mb-16" style={{ color: 'var(--vestige-stone)' }}>
+            How it works
+          </p>
+          <div className="flex flex-col" style={{ borderLeft: '1px solid var(--vestige-purple)', paddingLeft: '32px', gap: '0' }}>
+            {[
+              {
+                hash: 'a3f9c2b',
+                title: 'Ingest',
+                desc: 'Point Vestige at any Git repo. It reads your full commit history, diffs, PRs, and branch patterns — everything your team left behind.',
+              },
+              {
+                hash: 'b81e04a',
+                title: 'Trace',
+                desc: 'Every change is traced back to its origin. Vestige surfaces the decision, the context, and the confidence level of each inference.',
+              },
+              {
+                hash: 'c29f17d',
+                title: 'Explain',
+                desc: 'Claude turns the evidence into a narrative tailored to whoever is reading — so the why reaches everyone who needs it.',
+              },
+            ].map(({ hash, title, desc }, i) => (
+              <div key={hash} className="relative" style={{ paddingBottom: i < 2 ? '48px' : '0' }}>
+                <span
+                  className="absolute"
+                  style={{
+                    left: '-40px', top: '6px',
+                    width: '16px', height: '16px', borderRadius: '50%',
+                    border: '2px solid var(--vestige-purple)',
+                    background: 'var(--background)',
+                  }}
+                />
+                <h3 className="text-2xl font-semibold mb-3" style={{ color: 'var(--vestige-crystal)' }}>{title}</h3>
+                <p className="text-base leading-relaxed max-w-lg" style={{ color: '#a09a94' }}>{desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -93,8 +93,8 @@ export default function HomePage() {
                   { hash: 'c29f17d', msg: 'fix', file: 'middleware/auth.ts' },
                 ].map(({ hash, msg, file }) => (
                   <div key={hash} className="flex flex-col gap-0.5">
-                    <p className="text-sm font-mono font-semibold" style={{ color: '#e4f8de' }}>{msg}</p>
-                    <p className="text-xs font-mono" style={{ color: '#7aaa8a' }}>{hash} · {file}</p>
+                    <p className="text-sm font-mono font-semibold" style={{ color: 'var(--foreground)' }}>{msg}</p>
+                    <p className="text-xs font-mono" style={{ color: 'var(--vestige-stone)' }}>{hash} · {file}</p>
                   </div>
                 ))}
               </div>
@@ -115,62 +115,98 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Report tiers */}
+      {/* Placement Mode */}
       <section className="px-6 py-24" style={{ background: '#141414' }}>
         <div className="max-w-5xl mx-auto">
-          <p className="text-center text-2xl font-bold pb-2 uppercase tracking-[0.3em] font-mono mb-6" style={{ color: 'var(--vestige-stone)' }}>
-            Tiered output
+          <p className="text-xs uppercase tracking-[0.3em] font-mono mb-4" style={{ color: 'var(--vestige-stone)' }}>
+            Placement Mode
           </p>
-          <h2 className="text-4xl md:text-4xl font-bold text-center mb-16" style={{ color: 'var(--foreground)' }}>
-            The same why. Tailored for every reader.
+          <h2 className="text-3xl md:text-4xl font-semibold mb-6" style={{ color: 'var(--foreground)' }}>
+            Now that you understand it —<br />
+            <span style={{ color: 'var(--vestige-crystal)' }}>where does your change go?</span>
           </h2>
+          <p className="text-base leading-relaxed mb-16 max-w-2xl" style={{ color: '#a09a94' }}>
+            Opening a 14,000 line stylesheet to add a single style isn&apos;t a navigation problem. It&apos;s a confidence problem.
+            You don&apos;t know what touches what. So you write inline CSS. It works — but now you&apos;ve
+            deviated from the codebase&apos;s pattern, and the next developer inherits that deviation without knowing why.
+            That&apos;s how codebases accumulate confusion. One cautious decision at a time.
+          </p>
+
+          {/* Placement example */}
+          <div className="grid md:grid-cols-2 gap-6 items-stretch">
+            {/* Input */}
+            <div className="rounded-2xl p-6 border flex flex-col gap-4" style={{ borderColor: 'var(--vestige-stone)', background: '#1a1a1a' }}>
+              <span className="text-xs uppercase tracking-widest font-mono" style={{ color: 'var(--vestige-stone)' }}>styles.css · 14,000 lines</span>
+              <p className="text-sm leading-relaxed" style={{ color: '#a09a94' }}>
+                I want to add a hover state for <code className="text-xs px-1 py-0.5 rounded" style={{ background: '#2a2a2a', color: 'var(--vestige-crystal)' }}>.card-title</code> that changes the color to the brand purple.
+              </p>
+              <div className="flex flex-col gap-1 mt-2" style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>
+                {['827  .card-title { ... }', '828  .card-body { ... }', '829  /* utility classes */', '...'].map((line) => (
+                  <span key={line} style={{ color: '#444' }}>{line}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Output */}
+            <div className="rounded-2xl p-6 border flex flex-col gap-4" style={{ borderColor: 'var(--vestige-crystal)', background: '#1a1a1a' }}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase tracking-widest font-mono" style={{ color: 'var(--vestige-stone)' }}>Placement</span>
+                <span className="text-xs font-mono px-2 py-0.5 rounded-full" style={{ background: '#2a2a2a', color: 'var(--vestige-crystal)' }}>Line 828</span>
+              </div>
+              <p className="text-base leading-relaxed" style={{ color: '#a09a94' }}>
+                Add after line 827, directly below <code className="text-xs px-1 py-0.5 rounded" style={{ background: '#2a2a2a', color: 'var(--vestige-crystal)' }}>.card-title</code> — this is where component-level states live in this file. Adding here keeps it out of the global reset block above and the utility classes below.
+              </p>
+              <p className="text-sm font-mono" style={{ color: 'var(--vestige-stone)' }}>→ Safe. Follows the file&apos;s own pattern.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Two features */}
+      <section className="px-6 py-24" style={{ background: 'var(--background)' }}>
+        <div className="max-w-3xl mx-auto">
+          <p className="text-xs uppercase tracking-[0.3em] font-mono mb-12" style={{ color: 'var(--vestige-stone)' }}>
+            Two features. Nothing else.
+          </p>
           <div className="flex flex-col gap-6">
             {[
               {
-                label: 'Junior Dev',
-                desc: 'Why this exists and what it means for you — plain language that builds real understanding of the decisions that shaped the code.',
+                mode: 'Archaeology',
+                href: '/history',
+                question: 'Why is this like this?',
+                desc: 'Read the full commit history, PRs, and branch patterns. Claude writes you the story of every decision — documented and inferred.',
+                featured: false,
               },
               {
-                label: 'Mid Dev',
-                desc: 'The full decision trail — what changed, why it changed, and what patterns in the history are worth watching.',
+                mode: 'Placement',
+                href: '/placement',
+                question: 'Where does my change belong?',
+                desc: 'Point Vestige at a file and describe what you\'re adding. It reads the structure and tells you the exact line — and why that placement is safe.',
+                featured: true,
               },
-              {
-                label: 'Plain English',
-                desc: 'What this codebase does and the thinking behind it — for anyone who needs to understand without reading the code.',
-              },
-            ].map(({ label, desc }) => (
+            ].map(({ mode, question, desc, featured }) => (
               <div
-                key={label}
+                key={mode}
                 className="rounded-2xl p-8 border flex flex-col gap-3"
-                style={{ borderColor: 'var(--vestige-stone)', background: '#1a1a1a' }}
+                style={{
+                  borderColor: featured ? 'var(--vestige-crystal)' : 'var(--vestige-stone)',
+                  background: '#1a1a1a',
+                }}
               >
-                <span className="text-lg font-bold uppercase tracking-widest font-mono" style={{ color: 'var(--vestige-stone)' }}>
-                  {label}
+                <span className="text-xs font-mono uppercase tracking-widest" style={{ color: featured ? 'var(--vestige-crystal)' : 'var(--vestige-stone)' }}>
+                  {mode}
                 </span>
-                <p className="text-base leading-relaxed" style={{ color: '#a09a94' }}>
-                  {desc}
-                </p>
+                <h3 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
+                  {question}
+                </h3>
+                <p className="text-base leading-relaxed" style={{ color: '#a09a94' }}>{desc}</p>
               </div>
             ))}
-
-            {/* Senior Dev — featured */}
-            <div
-              className="rounded-2xl p-8 border flex flex-col gap-3"
-              style={{ borderColor: 'var(--vestige-crystal)', background: '#1a1a1a' }}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-lg font-bold uppercase tracking-widest font-mono" style={{ color: 'var(--vestige-crystal)' }}>
-                  Senior Dev
-                </span>
-                <span className="text-xs font-mono px-2 py-0.5 rounded-full" style={{ background: 'var(--vestige-purple)', color: 'var(--vestige-crystal)' }}>
-                  Most detailed
-                </span>
-              </div>
-              <p className="text-base leading-relaxed" style={{ color: '#a09a94' }}>
-                What is documented vs. inferred, with confidence scores and flags for decisions that deserve a closer look. The only report that tells you what the history couldn&apos;t prove.
-              </p>
-            </div>
           </div>
+          <p className="mt-12 text-base leading-relaxed" style={{ color: '#a09a94' }}>
+            These are the only two questions that matter when you&apos;re working in a codebase you didn&apos;t write.
+            Vestige answers both, in order, and gets out of your way.
+          </p>
         </div>
       </section>
 
@@ -178,18 +214,28 @@ export default function HomePage() {
       <section className="px-6 py-32 text-center">
         <div className="max-w-2xl mx-auto flex flex-col items-center gap-6">
           <h2 className="text-3xl md:text-4xl font-semibold leading-tight" style={{ color: 'var(--foreground)' }}>
-            Your history,<br />
-            <span style={{ color: 'var(--vestige-crystal)' }}>finally legible.</span>
+            Every codebase has a history.<br />
+            <span style={{ color: 'var(--vestige-crystal)' }}>Now you can read it.</span>
           </h2>
           <p className="text-base leading-relaxed" style={{ color: '#a09a94' }}>
-            Every weird architectural choice, every quiet dependency swap, every late-night hotfix — Vestige reads your Git history and tells you why.
+            Every weird architectural choice, every quiet dependency swap, every late-night hotfix — and now, every change you make — placed with confidence.
           </p>
-          <button
-            className="mt-2 px-8 py-3 rounded-full text-sm font-semibold tracking-wide transition-opacity hover:opacity-80 cursor-pointer"
-            style={{ background: 'var(--vestige-purple)', color: 'var(--vestige-crystal)' }}
-          >
-            Analyze a Repo
-          </button>
+          <div className="flex gap-4 mt-2 flex-wrap justify-center">
+            <a
+              href="/history"
+              className="px-8 py-3 rounded-full text-sm font-semibold tracking-wide transition-opacity hover:opacity-80"
+              style={{ background: 'var(--vestige-purple)', color: 'var(--vestige-crystal)' }}
+            >
+              Archaeology
+            </a>
+            <a
+              href="/placement"
+              className="px-8 py-3 rounded-full text-sm font-semibold tracking-wide transition-opacity hover:opacity-80"
+              style={{ border: '1px solid var(--vestige-stone)', color: 'var(--vestige-stone)' }}
+            >
+              Placement
+            </a>
+          </div>
         </div>
       </section>
 
