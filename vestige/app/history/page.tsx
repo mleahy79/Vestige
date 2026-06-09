@@ -31,8 +31,18 @@ interface PR {
   url: string;
 }
 
+interface Finding {
+  title: string;
+  detail: string;
+  confidence: "High" | "Medium" | "Low";
+  evidence: string;
+  inferred: boolean;
+  flag?: string;
+}
+
 interface AnalysisResult {
   narrative: string;
+  findings: Finding[];
   repo: RepoInfo;
   commits: Commit[];
   prs: PR[];
@@ -209,7 +219,7 @@ export default function HistoryPage() {
     );
   }
 
-  const { narrative, repo, commits, prs } = result;
+  const { narrative, findings = [], repo, commits, prs } = result;
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--background)", color: "var(--foreground)" }}>
@@ -270,7 +280,7 @@ export default function HistoryPage() {
                 transition: "color 0.15s",
               }}
             >
-              {tab === "narrative" ? "Vestige Analysis" : tab === "commits" ? `Commits (${commits.length})` : `PRs (${prs.length})`}
+              {tab === "narrative" ? "Narrative" : tab === "commits" ? `Commits (${commits.length})` : `PRs (${prs.length})`}
             </button>
           ))}
         </div>
@@ -287,6 +297,58 @@ export default function HistoryPage() {
               </span>
             </div>
             <NarrativeBlock text={narrative} />
+
+            {findings && findings.length > 0 && (
+              <div style={{ marginTop: "40px", borderTop: "1px solid #2a2a2a", paddingTop: "32px" }}>
+                <span style={{
+                  fontSize: "0.7rem", fontFamily: "monospace", letterSpacing: "0.2em",
+                  textTransform: "uppercase", color: "var(--vestige-stone)", display: "block",
+                  marginBottom: "20px",
+                }}>
+                  Key Findings
+                </span>
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {findings.map((f, i) => (
+                    <div key={i} style={{
+                      background: "#0e0e0e", border: "1px solid #2a2a2a",
+                      borderRadius: "12px", padding: "20px 24px",
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px", gap: "12px" }}>
+                        <span style={{ color: "var(--foreground)", fontWeight: 600, fontSize: "0.95rem" }}>
+                          {f.title}
+                        </span>
+                        <span style={{
+                          fontSize: "0.7rem", fontFamily: "monospace", padding: "3px 10px",
+                          borderRadius: "99px", whiteSpace: "nowrap", flexShrink: 0,
+                          background: f.confidence === "High" ? "rgba(80,180,80,0.12)" : f.confidence === "Medium" ? "rgba(180,140,40,0.12)" : "rgba(180,80,80,0.12)",
+                          color: f.confidence === "High" ? "#6dbf6d" : f.confidence === "Medium" ? "#c9a84c" : "#c96d6d",
+                          border: `1px solid ${f.confidence === "High" ? "rgba(80,180,80,0.3)" : f.confidence === "Medium" ? "rgba(180,140,40,0.3)" : "rgba(180,80,80,0.3)"}`,
+                        }}>
+                          {f.confidence} Confidence
+                        </span>
+                      </div>
+                      <p style={{ color: "#a09a94", fontSize: "0.88rem", lineHeight: 1.7, marginBottom: "10px" }}>
+                        {f.detail}
+                      </p>
+                      {f.evidence && (
+                        <span style={{ fontSize: "0.78rem", fontFamily: "monospace", color: "#555" }}>
+                          evidence: {f.evidence}
+                        </span>
+                      )}
+                      {f.inferred && f.flag && (
+                        <div style={{
+                          marginTop: "12px", padding: "8px 12px", borderRadius: "8px",
+                          background: "rgba(180,120,40,0.08)", border: "1px solid rgba(180,120,40,0.25)",
+                          fontSize: "0.78rem", fontFamily: "monospace", color: "#c9923a",
+                        }}>
+                          ⚠ {f.flag}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

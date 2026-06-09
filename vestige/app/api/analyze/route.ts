@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     })
     .join("\n\n");
 
-  const prompt = `You are Vestige, a code historian. Your job is to read a repository's Git history and write a detailed narrative explaining WHY this codebase evolved the way it did.
+  const prompt = `You are Vestige, a code historian. Analyze this repository's Git history and return a JSON object describing the full story of how and why this codebase evolved.
 
 REPOSITORY: ${repoData.full_name}
 Description: ${repoData.description || "(none)"}
@@ -106,7 +106,22 @@ Write a detailed narrative history of this codebase. Structure your response as 
 
 5. **What was left undocumented** — What decisions happened silently, without PR descriptions or clear commit messages? Name them.
 
-Be specific and reference real commit messages and PR titles. When you're inferring rather than reading, say so clearly. Write for a senior developer who just inherited this codebase and needs to understand not just what it does, but why it exists the way it does.`;
+Be specific and reference real commit messages and PR titles. When you're inferring rather than reading, say so clearly. Write for a senior developer who just inherited this codebase and needs to understand not just what it does, but why it exists the way it does.
+
+Return a JSON object with this exact shape — no preamble, no markdown fences, valid JSON only:
+{
+  "narrative": "the full narrative as markdown",
+  "findings": [
+    {
+      "title": "short finding title",
+      "detail": "one paragraph explanation",
+      "confidence": "High",
+      "evidence": "commit sha or PR that supports this",
+      "inferred": false,
+      "flag": "optional risk or undocumented decision note"
+    }
+  ]
+}`;
 
   const client = new Anthropic();
   const stream = client.messages.stream({
@@ -117,13 +132,27 @@ Be specific and reference real commit messages and PR titles. When you're inferr
   });
 
   const message = await stream.finalMessage();
-  const narrative = message.content
+  const raw = message.content
     .filter((block) => block.type === "text")
     .map((block) => (block as { type: "text"; text: string }).text)
     .join("");
 
+  let narrative = raw;
+  let findings: unknown[] = [];
+
+  try {
+    const clean = raw.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(clean);
+    narrative = parsed.narrative || raw;
+    findings = parsed.findings || [];
+  } catch {
+    narrative = raw;
+    findings = [];
+  }
+
   return Response.json({
     narrative,
+    findings,
     repo: {
       full_name: repoData.full_name,
       description: repoData.description,
