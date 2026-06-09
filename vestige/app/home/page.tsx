@@ -118,7 +118,7 @@ export default function HomePage() {
       {/* Placement Mode */}
       <section className="px-6 py-24" style={{ background: '#141414' }}>
         <div className="max-w-5xl mx-auto">
-          <p className="text-xs uppercase tracking-[0.3em] font-mono mb-4" style={{ color: 'var(--vestige-stone)' }}>
+          <p className="text-3xl md:text-4xl font-semibold uppercase tracking-[0.3em] mb-16" style={{ color: 'var(--vestige-stone)' }}>
             Placement Mode
           </p>
           <h2 className="text-3xl md:text-4xl font-semibold mb-6" style={{ color: 'var(--foreground)' }}>
