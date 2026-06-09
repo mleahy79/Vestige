@@ -36,7 +36,7 @@ export default function HomePage() {
       <section className="px-6 py-24 max-w-5xl mx-auto">
         <div className="flex justify-center mb-4">
           <span
-            className="text-xs uppercase tracking-[0.25em] font-mono px-3 py-1 rounded-full border"
+            className="text-center text-2xl font-bold uppercase tracking-[0.3em] font-mono mb-12 px-4 py-2 rounded-full border"
             style={{ color: 'var(--vestige-stone)', borderColor: 'var(--vestige-stone)' }}
           >
             Decision Archaeology
@@ -48,29 +48,25 @@ export default function HomePage() {
         <div className="grid md:grid-cols-3 gap-12 text-center">
           {[
             {
-              step: '01',
+              step: [1],
               title: 'Ingest',
               desc: 'Point Vestige at any Git repo. It reads your full commit history, diffs, PRs, and branch patterns — everything your team left behind.',
             },
             {
-              step: '02',
               title: 'Trace',
               desc: 'Every change is traced back to its origin. Vestige surfaces the decision, the context, and how confident the evidence is.',
             },
             {
-              step: '03',
+              step: [3],
               title: 'Explain',
               desc: 'Claude produces reports tailored to whoever is reading — so the why reaches everyone who needs it.',
             },
           ].map(({ step, title, desc }) => (
             <div key={step} className="flex flex-col items-center gap-4">
-              <span className="font-mono text-4xl font-bold" style={{ color: 'var(--vestige-crystal)' }}>
-                {step}
-              </span>
-              <h3 className="text-2xl font-semibold" style={{ color: 'var(--vestige-crystal)' }}>
+              <span className="font-mono text-4xl pb-3 font-bold" style={{ color: 'var(--vestige-crystal)' }}>
                 {title}
-              </h3>
-              <p className="text-base leading-relaxed" style={{ color: '#a09a94' }}>
+              </span>
+              <p className="text-lg leading-relaxed" style={{ color: '#a09a94' }}>
                 {desc}
               </p>
             </div>
