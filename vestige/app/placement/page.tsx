@@ -189,12 +189,12 @@ export default function PlacementPage() {
       <div style={{ maxWidth: "720px", margin: "0 auto", padding: "80px 24px" }}>
         <div style={{ textAlign: "center", marginBottom: "48px" }}>
           <span style={{
-            display: "inline-block", fontSize: "2.25rem", fontWeight: 600, fontFamily: "monospace",
+            display: "inline-block", fontSize: "3rem", fontWeight: 600, fontFamily: "monospace",
             letterSpacing: "0.25em", textTransform: "uppercase",
-            color: "var(--vestige-stone)", border: "1px solid var(--vestige-stone)",
-            padding: "4px 14px", borderRadius: "99px", marginBottom: "60px",
+            color: "var(--vestige-stone)",
+            padding: "4px 14px", marginBottom: "60px",
           }}>
-            Placement Mode
+            Placement 
           </span>
           <h1 style={{ fontSize: "2.5rem", fontWeight: 700, color: "var(--foreground)", marginBottom: "12px", lineHeight: 1.2 }}>
             Where does your<br />
