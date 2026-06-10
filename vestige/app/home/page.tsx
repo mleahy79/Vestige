@@ -97,7 +97,7 @@ export default function HomePage() {
                   borderBottom: i < 2 ? "1px solid var(--vestige-purple)" : "none",
                 }}
               >
-                <Icon size={40} style={{ color: "#a09a94", flexShrink: 0, marginTop: "4px" }} />
+                <Icon size={40} style={{ color: "var(--vestige-crystal)", flexShrink: 0, marginTop: "4px" }} />
                 <div>
                   <h3
                     className="text-2xl font-semibold mb-3"
