@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+
+const STORAGE_KEY = "vestige_archaeology_result";
 
 interface RepoInfo {
   full_name: string;
@@ -48,57 +51,168 @@ interface AnalysisResult {
   prs: PR[];
 }
 
-function NarrativeBlock({ text }: { text: string }) {
-  const paragraphs = text.split(/\n{2,}/);
+type Tier = "all" | "hi" | "md" | "lo";
+
+const BADGE = {
+  High:   { color: "var(--arch-mist)",     border: "rgba(127,174,154,0.55)",  bg: "rgba(127,174,154,0.09)" },
+  Medium: { color: "var(--arch-lavender)",  border: "rgba(217,199,242,0.4)",   bg: "rgba(217,199,242,0.07)" },
+  Low:    { color: "var(--arch-amber)",     border: "rgba(207,138,74,0.55)",   bg: "rgba(207,138,74,0.09)" },
+} as const;
+
+const TIER_MAP: Record<string, Tier> = { High: "hi", Medium: "md", Low: "lo" };
+
+function FindingCard({ f }: { f: Finding }) {
+  const badge = BADGE[f.confidence];
+
   return (
-    <div style={{ color: "#a09a94", lineHeight: "1.8", fontSize: "0.95rem" }}>
-      {paragraphs.map((para, i) => {
-        if (para.startsWith("# ")) {
-          return (
-            <h2 key={i} style={{ color: "var(--vestige-crystal)", fontSize: "1.25rem", fontWeight: 700, marginTop: "1.5rem", marginBottom: "0.5rem" }}>
-              {para.replace(/^# /, "")}
-            </h2>
-          );
-        }
-        if (para.startsWith("## ")) {
-          return (
-            <h3 key={i} style={{ color: "var(--vestige-stone)", fontSize: "1.1rem", fontWeight: 600, marginTop: "1.25rem", marginBottom: "0.4rem" }}>
-              {para.replace(/^## /, "")}
-            </h3>
-          );
-        }
-        if (para.startsWith("**") && para.endsWith("**")) {
-          return (
-            <h3 key={i} style={{ color: "var(--vestige-stone)", fontSize: "1.05rem", fontWeight: 600, marginTop: "1.25rem", marginBottom: "0.4rem" }}>
-              {para.replace(/\*\*/g, "")}
-            </h3>
-          );
-        }
-        return (
-          <p key={i} style={{ marginBottom: "1rem", whiteSpace: "pre-wrap" }}>
-            {para}
+    <article style={{
+      border: "1px solid var(--arch-seam)",
+      borderRadius: "11px",
+      background: "var(--arch-obsidian)",
+      marginBottom: "1.15rem",
+      overflow: "hidden",
+      display: "grid",
+      gridTemplateColumns: "minmax(230px, 300px) 1fr",
+    }}>
+      {/* Evidence column */}
+      <div style={{
+        borderRight: "1px solid var(--arch-seam)",
+        padding: "1.15rem 1.2rem",
+        background: "linear-gradient(180deg, rgba(181,162,104,0.04) 0%, transparent 45%)",
+      }}>
+        <span style={{
+          display: "block",
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.68rem",
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "var(--arch-fossil)",
+          marginBottom: "0.85rem",
+        }}>
+          Evidence
+        </span>
+        <b style={{
+          display: "block",
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.8rem",
+          fontWeight: 500,
+          color: "var(--arch-parchment)",
+          marginBottom: "0.35rem",
+        }}>
+          {f.title}
+        </b>
+        <span style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.68rem",
+          color: "var(--arch-fossil)",
+          opacity: 0.85,
+        }}>
+          {f.evidence}
+        </span>
+      </div>
+
+      {/* Analysis column */}
+      <div style={{ padding: "1.15rem 1.4rem 1.25rem" }}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "0.8rem",
+          marginBottom: "0.7rem",
+          flexWrap: "wrap",
+        }}>
+          <span style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.68rem",
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: "var(--arch-amethyst)",
+          }}>
+            Vestige analysis
+          </span>
+          <span style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.62rem",
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            borderRadius: "999px",
+            padding: "0.28rem 0.75rem",
+            border: `1px solid ${badge.border}`,
+            color: badge.color,
+            background: badge.bg,
+          }}>
+            {f.confidence} confidence
+          </span>
+        </div>
+
+        <p style={{
+          color: "var(--arch-stone)",
+          fontSize: "0.95rem",
+          lineHeight: 1.65,
+          maxWidth: "60ch",
+        }}>
+          {f.detail}
+        </p>
+
+        {f.flag && (
+          <p style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.74rem",
+            color: "var(--arch-amber)",
+            marginTop: "0.85rem",
+            lineHeight: 1.7,
+          }}>
+            △ {f.flag}
           </p>
-        );
-      })}
-    </div>
+        )}
+
+        <div style={{ marginTop: "1.05rem", display: "flex", gap: "1.3rem" }}>
+          {(["View full evidence", "Copy as PR comment"] as const).map((label) => (
+            <button
+              key={label}
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.7rem",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "var(--arch-lavender)",
+                background: "none",
+                border: "none",
+                borderBottom: "1px solid transparent",
+                paddingBottom: "1px",
+                cursor: "pointer",
+                transition: "border-color 0.18s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderBottomColor = "var(--arch-lavender)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderBottomColor = "transparent")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </article>
   );
 }
 
 export default function HistoryPage() {
-  const [repoUrl, setRepoUrl] = useState("");
+  const [repoUrl, setRepoUrl] = useState<string>(() => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null")?.repoUrl ?? ""; } catch { return ""; }
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [activeTab, setActiveTab] = useState<"narrative" | "commits" | "prs">("narrative");
+  const [result, setResult] = useState<AnalysisResult | null>(() => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null")?.result ?? null; } catch { return null; }
+  });
+  const [activeTier, setActiveTier] = useState<Tier>("all");
+  const [showCommits, setShowCommits] = useState(false);
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!repoUrl.trim()) return;
-
     setLoading(true);
     setError(null);
     setResult(null);
-
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -106,12 +220,10 @@ export default function HistoryPage() {
         body: JSON.stringify({ repoUrl: repoUrl.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Analysis failed");
-        return;
-      }
+      if (!res.ok) { setError(data.error || "Analysis failed"); return; }
       setResult(data);
-      setActiveTab("narrative");
+      setActiveTier("all");
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ result: data, repoUrl: repoUrl.trim() })); } catch { /* ignore */ }
     } catch {
       setError("Network error — could not reach the server.");
     } finally {
@@ -123,51 +235,48 @@ export default function HistoryPage() {
     setResult(null);
     setError(null);
     setRepoUrl("");
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
   }
 
+  /* ── Loading ── */
   if (loading) {
     return (
-      <main style={{ minHeight: "100vh", background: "var(--background)", color: "var(--foreground)" }}>
+      <main style={{ minHeight: "100vh", background: "var(--arch-void)", color: "var(--arch-parchment)" }}>
         <div style={{ maxWidth: "800px", margin: "0 auto", padding: "80px 24px", textAlign: "center" }}>
-          <div style={{ marginBottom: "24px" }}>
-            <div style={{
-              width: "48px", height: "48px", borderRadius: "50%",
-              border: "3px solid var(--vestige-purple)",
-              borderTopColor: "var(--vestige-crystal)",
-              animation: "spin 1s linear infinite",
-              margin: "0 auto 24px",
-            }} />
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
-          <h2 style={{ color: "var(--vestige-crystal)", fontSize: "1.5rem", fontWeight: 600, marginBottom: "12px" }}>
+            <DotLottieReact src="/loading.lottie" loop autoplay style={{ width: 220, height: 220, margin: "0 auto" }} />
+          <h2 style={{ fontFamily: "var(--font-mono)", fontSize: "1rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--arch-lavender)", marginBottom: "12px" }}>
             Reading the history
           </h2>
-          <p style={{ color: "#a09a94" }}>
-            Fetching commits and PRs, then asking Claude to trace the decisions...
+          <p style={{ color: "var(--arch-stone)", fontSize: "0.9rem" }}>
+            Fetching commits and PRs, then tracing the decisions…
           </p>
         </div>
       </main>
     );
   }
 
+  /* ── Input form ── */
   if (!result) {
     return (
-      <main style={{ minHeight: "100vh", background: "var(--background)", color: "var(--foreground)" }}>
+      <main style={{ minHeight: "100vh", background: "var(--arch-void)", color: "var(--arch-parchment)" }}>
         <div style={{ maxWidth: "720px", margin: "0 auto", padding: "80px 24px" }}>
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
             <span style={{
-              display: "inline-block", fontSize: "3rem", fontWeight: 600, fontFamily: "monospace",
-              letterSpacing: "0.25em", textTransform: "uppercase",
-              color: "var(--vestige-stone)",
-               padding: "4px 14px", marginBottom: "60px",
+              display: "inline-block",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.72rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "var(--arch-fossil)",
+              marginBottom: "2rem",
             }}>
               Decision Archaeology
             </span>
-            <h1 style={{ fontSize: "2.5rem", fontWeight: 700, color: "var(--foreground)", marginBottom: "12px", lineHeight: 1.2 }}>
+            <h1 style={{ fontSize: "2.5rem", fontWeight: 700, color: "var(--arch-parchment)", marginBottom: "12px", lineHeight: 1.2 }}>
               Why does this<br />
-              <span style={{ color: "var(--vestige-crystal)" }}>code exist?</span>
+              <span style={{ color: "var(--arch-lavender)" }}>code exist?</span>
             </h1>
-            <p style={{ color: "#a09a94", fontSize: "1.05rem", lineHeight: 1.7 }}>
+            <p style={{ color: "var(--arch-stone)", fontSize: "1.05rem", lineHeight: 1.7 }}>
               Paste a GitHub repository URL. Vestige reads the full commit history,<br />
               PRs, and branch patterns — then writes you the story behind the code.
             </p>
@@ -175,16 +284,16 @@ export default function HistoryPage() {
 
           {error && (
             <div style={{
-              background: "rgba(180,60,60,0.12)", border: "1px solid rgba(180,60,60,0.4)",
-              borderRadius: "12px", padding: "14px 18px", marginBottom: "24px",
-              color: "#f08080", fontSize: "0.9rem",
+              background: "rgba(180,60,60,0.1)", border: "1px solid rgba(180,60,60,0.35)",
+              borderRadius: "10px", padding: "14px 18px", marginBottom: "24px",
+              color: "#f08080", fontSize: "0.88rem", fontFamily: "var(--font-mono)",
             }}>
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit}>
-            <div style={{ display: "flex", gap: "12px" }}>
+            <div style={{ display: "flex", gap: "10px" }}>
               <input
                 type="text"
                 value={repoUrl}
@@ -193,21 +302,22 @@ export default function HistoryPage() {
                 autoComplete="off"
                 spellCheck={false}
                 style={{
-                  flex: 1, padding: "14px 18px", borderRadius: "12px",
-                  background: "#111111", border: "1px solid #333",
-                  color: "var(--foreground)", fontSize: "0.95rem",
-                  outline: "none", fontFamily: "monospace",
+                  flex: 1, padding: "13px 18px", borderRadius: "9px",
+                  background: "var(--arch-obsidian)", border: "1px solid var(--arch-seam)",
+                  color: "var(--arch-parchment)", fontSize: "0.9rem",
+                  outline: "none", fontFamily: "var(--font-mono)",
                 }}
               />
               <button
                 type="submit"
                 disabled={!repoUrl.trim()}
                 style={{
-                  padding: "14px 28px", borderRadius: "12px",
-                  background: "var(--vestige-purple)", color: "var(--vestige-crystal)",
-                  fontWeight: 600, fontSize: "0.9rem", cursor: "pointer",
-                  border: "none", opacity: repoUrl.trim() ? 1 : 0.4,
-                  transition: "opacity 0.15s",
+                  padding: "13px 26px", borderRadius: "9px",
+                  background: "var(--arch-amethyst)", color: "var(--arch-lavender)",
+                  fontFamily: "var(--font-mono)", fontSize: "0.7rem",
+                  letterSpacing: "0.12em", textTransform: "uppercase",
+                  fontWeight: 500, cursor: "pointer", border: "none",
+                  opacity: repoUrl.trim() ? 1 : 0.4, transition: "opacity 0.15s",
                 }}
               >
                 Analyze
@@ -219,221 +329,261 @@ export default function HistoryPage() {
     );
   }
 
+  /* ── Results ── */
   const { narrative, findings = [], repo, commits, prs } = result;
 
-  return (
-    <main style={{ minHeight: "100vh", background: "var(--background)", color: "var(--foreground)" }}>
-      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "40px 24px" }}>
+  const tiers: { id: Tier; label: string }[] = [
+    { id: "all", label: "All findings" },
+    { id: "hi",  label: "High" },
+    { id: "md",  label: "Medium" },
+    { id: "lo",  label: "Low" },
+  ];
 
-        {/* Repo header */}
-        <div style={{
-          background: "#111111", border: "1px solid #2a2a2a",
-          borderRadius: "16px", padding: "24px 28px", marginBottom: "28px",
+  const visibleFindings = activeTier === "all"
+    ? findings
+    : findings.filter((f) => TIER_MAP[f.confidence] === activeTier);
+
+  const counts = {
+    hi:  findings.filter((f) => f.confidence === "High").length,
+    md:  findings.filter((f) => f.confidence === "Medium").length,
+    lo:  findings.filter((f) => f.confidence === "Low").length,
+  };
+
+  return (
+    <main style={{ minHeight: "100vh", background: "var(--arch-void)", color: "var(--arch-parchment)" }}>
+      <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "clamp(1.25rem, 3vw, 2.5rem)" }}>
+
+        {/* Dig summary */}
+        <section style={{
+          display: "grid",
+          gridTemplateColumns: "1fr auto",
+          gap: "1.5rem",
+          alignItems: "end",
+          marginBottom: "1.75rem",
         }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
-            <div>
+          <div>
+            <h1 style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.01em" }}>
+              The dig is complete.{" "}
+              <em style={{ fontStyle: "normal", color: "var(--arch-lavender)" }}>
+                Here&apos;s what the history admits to.
+              </em>
+            </h1>
+            <p style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.72rem",
+              color: "var(--arch-slate)",
+              marginTop: "0.45rem",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+            }}>
               <a
                 href={repo.html_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: "var(--vestige-crystal)", fontWeight: 700, fontSize: "1.3rem", textDecoration: "none" }}
+                style={{ color: "var(--arch-fossil)", textDecoration: "none" }}
               >
                 {repo.full_name}
               </a>
-              {repo.description && (
-                <p style={{ color: "#a09a94", marginTop: "6px", fontSize: "0.9rem" }}>{repo.description}</p>
-              )}
-            </div>
-            <button
-              onClick={reset}
-              style={{
-                padding: "8px 18px", borderRadius: "99px", fontSize: "0.8rem",
-                border: "1px solid #444", color: "#a09a94", background: "transparent",
-                cursor: "pointer", whiteSpace: "nowrap",
-              }}
-            >
-              New analysis
-            </button>
+              {" · "}
+              {commits.length} commits read
+              {" · "}
+              {prs.length} PRs
+              {repo.language && ` · ${repo.language}`}
+            </p>
           </div>
-          <div style={{ display: "flex", gap: "20px", marginTop: "14px", flexWrap: "wrap", fontSize: "0.82rem", color: "#666" }}>
-            {repo.language && <span style={{ color: "var(--vestige-stone)" }}>{repo.language}</span>}
-            <span>★ {repo.stars?.toLocaleString()}</span>
-            <span>{repo.forks?.toLocaleString()} forks</span>
-            <span>{commits.length} commits loaded</span>
-            <span>{prs.length} PRs</span>
-            {repo.created_at && <span>Created {repo.created_at.split("T")[0]}</span>}
+
+          <div style={{ display: "flex", gap: "1px", background: "var(--arch-seam)", border: "1px solid var(--arch-seam)", borderRadius: "9px", overflow: "hidden" }}>
+            {[
+              { val: counts.hi,  label: "High",   color: "var(--arch-mist)" },
+              { val: counts.md,  label: "Medium",  color: "var(--arch-lavender)" },
+              { val: counts.lo,  label: "Low",     color: "var(--arch-amber)" },
+              { val: findings.length, label: "Total", color: "var(--arch-fossil)" },
+            ].map(({ val, label, color }) => (
+              <div key={label} style={{ background: "var(--arch-obsidian)", padding: "0.8rem 1.15rem", textAlign: "center", minWidth: "80px" }}>
+                <b style={{ display: "block", fontSize: "1.35rem", fontWeight: 600, lineHeight: 1.1, color }}>{val}</b>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.58rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--arch-slate)" }}>{label}</span>
+              </div>
+            ))}
           </div>
+        </section>
+
+        {/* Filters */}
+        <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap", marginBottom: "1.5rem", alignItems: "center" }}>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--arch-slate)", marginRight: "0.3rem" }}>
+            Show
+          </span>
+          {tiers.map(({ id, label }) => {
+            const on = activeTier === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTier(id)}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.68rem",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  border: `1px solid ${on ? "var(--arch-amethyst)" : "var(--arch-seam)"}`,
+                  borderRadius: "999px",
+                  padding: "0.42rem 0.95rem",
+                  color: on ? "var(--arch-lavender)" : "var(--arch-stone)",
+                  background: on ? "rgba(142,108,201,0.14)" : "none",
+                  cursor: "pointer",
+                  transition: "0.18s",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", color: "var(--arch-slate)", marginLeft: "auto", letterSpacing: "0.08em" }}>
+            {visibleFindings.length} finding{visibleFindings.length !== 1 ? "s" : ""}
+          </span>
+          <button
+            onClick={reset}
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.68rem",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              border: "1px solid var(--arch-seam)",
+              borderRadius: "999px",
+              padding: "0.42rem 0.95rem",
+              color: "var(--arch-slate)",
+              background: "none",
+              cursor: "pointer",
+            }}
+          >
+            New analysis
+          </button>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: "4px", marginBottom: "24px", borderBottom: "1px solid #2a2a2a", paddingBottom: "0" }}>
-          {(["narrative", "commits", "prs"] as const).map((tab) => (
+        {/* Finding cards */}
+        {visibleFindings.map((f, i) => (
+          <FindingCard key={i} f={f} />
+        ))}
+
+        {visibleFindings.length === 0 && (
+          <p style={{ color: "var(--arch-slate)", fontFamily: "var(--font-mono)", fontSize: "0.85rem", padding: "2rem 0" }}>
+            No findings at this confidence level.
+          </p>
+        )}
+
+        {/* Narrative (collapsible) */}
+        {narrative && (
+          <section style={{ marginTop: "2rem" }}>
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => setShowCommits((v) => !v)}
               style={{
-                padding: "10px 20px", background: "transparent", border: "none",
-                cursor: "pointer", fontSize: "0.85rem", fontWeight: 500,
-                color: activeTab === tab ? "var(--vestige-crystal)" : "#666",
-                borderBottom: activeTab === tab ? "2px solid var(--vestige-crystal)" : "2px solid transparent",
-                marginBottom: "-1px", textTransform: "capitalize",
-                transition: "color 0.15s",
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.68rem",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "var(--arch-slate)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                paddingBottom: "0.75rem",
+                borderBottom: "1px solid var(--arch-seam)",
+                width: "100%",
               }}
             >
-              {tab === "narrative" ? "Narrative" : tab === "commits" ? `Commits (${commits.length})` : `PRs (${prs.length})`}
+              <span style={{ color: "var(--arch-fossil)" }}>{showCommits ? "▾" : "▸"}</span>
+              Full narrative · {commits.length} commits · {prs.length} PRs
             </button>
-          ))}
-        </div>
 
-        {/* Narrative tab */}
-        {activeTab === "narrative" && (
-          <div style={{ background: "#111111", border: "1px solid #2a2a2a", borderRadius: "16px", padding: "32px 36px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
-              <span style={{ fontSize: "0.7rem", fontFamily: "monospace", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--vestige-stone)" }}>
-                Vestige Analysis
-              </span>
-              <span style={{ fontSize: "0.7rem", fontFamily: "monospace", padding: "3px 10px", borderRadius: "99px", background: "#1e1e1e", color: "var(--vestige-crystal)" }}>
-                Claude Opus 4.8
-              </span>
-            </div>
-            <NarrativeBlock text={narrative} />
-
-            {findings && findings.length > 0 && (
-              <div style={{ marginTop: "40px", borderTop: "1px solid #2a2a2a", paddingTop: "32px" }}>
-                <span style={{
-                  fontSize: "0.7rem", fontFamily: "monospace", letterSpacing: "0.2em",
-                  textTransform: "uppercase", color: "var(--vestige-stone)", display: "block",
-                  marginBottom: "20px",
+            {showCommits && (
+              <div style={{ marginTop: "1.25rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                {/* Narrative text */}
+                <div style={{
+                  border: "1px solid var(--arch-seam)",
+                  borderRadius: "11px",
+                  background: "var(--arch-obsidian)",
+                  padding: "1.4rem 1.5rem",
+                  gridColumn: "1 / -1",
                 }}>
-                  Key Findings
-                </span>
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                  {findings.map((f, i) => (
-                    <div key={i} style={{
-                      background: "#0e0e0e", border: "1px solid #2a2a2a",
-                      borderRadius: "12px", padding: "20px 24px",
-                    }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px", gap: "12px" }}>
-                        <span style={{ color: "var(--foreground)", fontWeight: 600, fontSize: "0.95rem" }}>
-                          {f.title}
-                        </span>
-                        <span style={{
-                          fontSize: "0.7rem", fontFamily: "monospace", padding: "3px 10px",
-                          borderRadius: "99px", whiteSpace: "nowrap", flexShrink: 0,
-                          background: f.confidence === "High" ? "rgba(80,180,80,0.12)" : f.confidence === "Medium" ? "rgba(180,140,40,0.12)" : "rgba(180,80,80,0.12)",
-                          color: f.confidence === "High" ? "#6dbf6d" : f.confidence === "Medium" ? "#c9a84c" : "#c96d6d",
-                          border: `1px solid ${f.confidence === "High" ? "rgba(80,180,80,0.3)" : f.confidence === "Medium" ? "rgba(180,140,40,0.3)" : "rgba(180,80,80,0.3)"}`,
-                        }}>
-                          {f.confidence} Confidence
-                        </span>
-                      </div>
-                      <p style={{ color: "#a09a94", fontSize: "0.88rem", lineHeight: 1.7, marginBottom: "10px" }}>
-                        {f.detail}
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--arch-amethyst)", display: "block", marginBottom: "1rem" }}>
+                    Narrative
+                  </span>
+                  <div style={{ color: "var(--arch-stone)", fontSize: "0.9rem", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
+                    {narrative}
+                  </div>
+                </div>
+
+                {/* Commits */}
+                <div style={{ border: "1px solid var(--arch-seam)", borderRadius: "11px", background: "var(--arch-obsidian)", padding: "1.2rem 1.35rem" }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--arch-fossil)", display: "block", marginBottom: "0.9rem" }}>
+                    Commits ({commits.length})
+                  </span>
+                  {commits.slice(0, 30).map((c, i) => (
+                    <div key={c.sha} style={{ paddingBottom: "0.7rem", marginBottom: "0.7rem", borderBottom: i < Math.min(commits.length, 30) - 1 ? "1px solid var(--arch-seam)" : "none" }}>
+                      <p style={{ fontSize: "0.85rem", color: "var(--arch-parchment)", marginBottom: "3px", lineHeight: 1.4 }}>
+                        {c.message.split("\n")[0]}
                       </p>
-                      {f.evidence && (
-                        <span style={{ fontSize: "0.78rem", fontFamily: "monospace", color: "#555" }}>
-                          evidence: {f.evidence}
-                        </span>
-                      )}
-                      {f.inferred && f.flag && (
-                        <div style={{
-                          marginTop: "12px", padding: "8px 12px", borderRadius: "8px",
-                          background: "rgba(180,120,40,0.08)", border: "1px solid rgba(180,120,40,0.25)",
-                          fontSize: "0.78rem", fontFamily: "monospace", color: "#c9923a",
+                      <div style={{ display: "flex", gap: "12px", fontSize: "0.72rem", color: "var(--arch-slate)", fontFamily: "var(--font-mono)" }}>
+                        <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--arch-fossil)", textDecoration: "none" }}>
+                          {c.sha.substring(0, 7)}
+                        </a>
+                        <span>{c.author}</span>
+                        <span>{c.date ? new Date(c.date).toLocaleDateString() : ""}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* PRs */}
+                <div style={{ border: "1px solid var(--arch-seam)", borderRadius: "11px", background: "var(--arch-obsidian)", padding: "1.2rem 1.35rem" }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--arch-fossil)", display: "block", marginBottom: "0.9rem" }}>
+                    Pull Requests ({prs.length})
+                  </span>
+                  {prs.length === 0 ? (
+                    <p style={{ color: "var(--arch-slate)", fontSize: "0.85rem" }}>No pull requests found.</p>
+                  ) : prs.map((pr, i) => (
+                    <div key={pr.number} style={{ paddingBottom: "0.7rem", marginBottom: "0.7rem", borderBottom: i < prs.length - 1 ? "1px solid var(--arch-seam)" : "none" }}>
+                      <div style={{ display: "flex", gap: "8px", alignItems: "flex-start", marginBottom: "4px" }}>
+                        <span style={{
+                          fontFamily: "var(--font-mono)", fontSize: "0.62rem", padding: "2px 8px",
+                          borderRadius: "999px", flexShrink: 0,
+                          background: pr.merged_at ? "rgba(142,108,201,0.2)" : "rgba(255,255,255,0.04)",
+                          color: pr.merged_at ? "var(--arch-lavender)" : "var(--arch-slate)",
                         }}>
-                          ⚠ {f.flag}
-                        </div>
-                      )}
+                          {pr.merged_at ? "merged" : "closed"}
+                        </span>
+                        <a href={pr.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--arch-parchment)", fontSize: "0.85rem", textDecoration: "none", lineHeight: 1.4 }}>
+                          {pr.title}
+                        </a>
+                      </div>
+                      <div style={{ fontSize: "0.72rem", color: "var(--arch-slate)", fontFamily: "var(--font-mono)" }}>
+                        #{pr.number} · {pr.user}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-          </div>
+          </section>
         )}
 
-        {/* Commits tab */}
-        {activeTab === "commits" && (
-          <div style={{ background: "#111111", border: "1px solid #2a2a2a", borderRadius: "16px", padding: "24px 28px" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
-              {commits.map((c, i) => (
-                <div
-                  key={c.sha}
-                  style={{
-                    padding: "14px 0",
-                    borderBottom: i < commits.length - 1 ? "1px solid #1e1e1e" : "none",
-                  }}
-                >
-                  <p style={{ color: "var(--foreground)", fontSize: "0.9rem", marginBottom: "4px", lineHeight: 1.4 }}>
-                    {c.message.split("\n")[0]}
-                  </p>
-                  <div style={{ display: "flex", gap: "16px", fontSize: "0.78rem", color: "#555" }}>
-                    <span style={{ color: "#666" }}>{c.author || "Unknown"}</span>
-                    <span>{c.date ? new Date(c.date).toLocaleDateString() : ""}</span>
-                    <a
-                      href={c.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ fontFamily: "monospace", color: "var(--vestige-stone)", textDecoration: "none" }}
-                    >
-                      {c.sha.substring(0, 7)}
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* PRs tab */}
-        {activeTab === "prs" && (
-          <div style={{ background: "#111111", border: "1px solid #2a2a2a", borderRadius: "16px", padding: "24px 28px" }}>
-            {prs.length === 0 ? (
-              <p style={{ color: "#666", fontSize: "0.9rem" }}>No pull requests found.</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
-                {prs.map((pr, i) => (
-                  <div
-                    key={pr.number}
-                    style={{
-                      padding: "16px 0",
-                      borderBottom: i < prs.length - 1 ? "1px solid #1e1e1e" : "none",
-                    }}
-                  >
-                    <div style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "6px" }}>
-                      <span style={{
-                        fontSize: "0.7rem", padding: "2px 8px", borderRadius: "99px", flexShrink: 0,
-                        background: pr.merged_at ? "rgba(61,38,69,0.5)" : "#1e1e1e",
-                        color: pr.merged_at ? "var(--vestige-crystal)" : "#666",
-                        fontFamily: "monospace",
-                      }}>
-                        {pr.merged_at ? "merged" : "closed"}
-                      </span>
-                      <a
-                        href={pr.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: "var(--foreground)", fontSize: "0.9rem", textDecoration: "none", lineHeight: 1.4 }}
-                      >
-                        {pr.title}
-                      </a>
-                    </div>
-                    <div style={{ display: "flex", gap: "16px", fontSize: "0.78rem", color: "#555", paddingLeft: "0" }}>
-                      <span>#{pr.number}</span>
-                      <span>{pr.user}</span>
-                      <span>{pr.merged_at ? new Date(pr.merged_at).toLocaleDateString() : pr.closed_at ? new Date(pr.closed_at).toLocaleDateString() : ""}</span>
-                    </div>
-                    {pr.body && (
-                      <p style={{ color: "#555", fontSize: "0.8rem", marginTop: "6px", lineHeight: 1.5, maxWidth: "680px" }}>
-                        {pr.body.substring(0, 200)}{pr.body.length > 200 ? "…" : ""}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Footer */}
+        <footer style={{
+          marginTop: "2.2rem",
+          paddingTop: "1.4rem",
+          borderTop: "1px solid var(--arch-seam)",
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.68rem",
+          color: "var(--arch-slate)",
+          letterSpacing: "0.08em",
+          display: "flex",
+          justifyContent: "space-between",
+          gap: "1rem",
+          flexWrap: "wrap",
+        }}>
+          <span>VESTIGE · EVERY CHANGE LEAVES A VESTIGE</span>
+          <span>GOLD = WHAT HAPPENED · PURPLE = WHAT IT MEANS</span>
+        </footer>
       </div>
     </main>
   );

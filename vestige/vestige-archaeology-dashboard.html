@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vestige — Archaeology Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Vestige palette — approximated from live site; swap for your exact tokens */
+  --void:#0e0c12;
+  --obsidian:#16131c;
+  --seam:#2a2435;
+  --parchment:#eae6dd;
+  --stone:#9b94a4;
+  --slate:#6b6477;
+  --lavender:#d9c7f2;
+  --amethyst:#8e6cc9;
+  --fossil:#b5a268;      /* gold — evidence only */
+  --amber:#cf8a4a;       /* inference flags only */
+  --mist:#7fae9a;        /* high confidence only */
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--void);color:var(--parchment);
+  font-family:var(--sans);font-size:1rem;line-height:1.6;
+  min-height:100vh;
+}
+::selection{background:var(--amethyst);color:var(--void)}
+a{color:var(--lavender)}
+button{font:inherit;cursor:pointer;background:none;border:none;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--lavender);outline-offset:2px}
+
+.label{font-family:var(--mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase}
+
+/* ============ top bar ============ */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+  padding:.9rem clamp(1rem,3vw,2.5rem);
+  border-bottom:1px solid var(--seam);
+  position:sticky;top:0;background:color-mix(in srgb,var(--void) 92%,transparent);
+  backdrop-filter:blur(8px);z-index:20;
+}
+.wordmark{font-family:var(--mono);letter-spacing:.42em;font-size:.95rem;color:var(--fossil);font-weight:500}
+.repo-chip{
+  font-family:var(--mono);font-size:.78rem;color:var(--stone);
+  display:flex;align-items:center;gap:.55rem;
+}
+.repo-chip b{color:var(--parchment);font-weight:500}
+.repo-chip .dot{color:var(--slate)}
+.mode{display:flex;border:1px solid var(--seam);border-radius:7px;overflow:hidden}
+.mode button{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+  padding:.5rem .95rem;color:var(--slate);transition:.2s;
+}
+.mode button.on{background:var(--obsidian);color:var(--lavender)}
+.mode button:hover:not(.on){color:var(--stone)}
+
+/* ============ shell ============ */
+.shell{max-width:1240px;margin:0 auto;padding:clamp(1.25rem,3vw,2.5rem)}
+
+/* ============ dig summary ============ */
+.dig{
+  display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:end;
+  margin-bottom:1.75rem;
+}
+.dig h1{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:700;line-height:1.2;letter-spacing:-.01em}
+.dig h1 em{font-style:normal;color:var(--lavender)}
+.dig-meta{font-family:var(--mono);font-size:.72rem;color:var(--slate);margin-top:.45rem;letter-spacing:.06em}
+.dig-stats{display:flex;gap:1px;background:var(--seam);border:1px solid var(--seam);border-radius:9px;overflow:hidden}
+.stat{background:var(--obsidian);padding:.8rem 1.15rem;text-align:center;min-width:86px}
+.stat b{display:block;font-size:1.35rem;font-weight:600;line-height:1.1}
+.stat span{font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--slate)}
+.stat.hi b{color:var(--mist)}
+.stat.md b{color:var(--lavender)}
+.stat.lo b{color:var(--amber)}
+.stat.gap b{color:var(--fossil)}
+
+/* ============ filters ============ */
+.filters{display:flex;gap:.55rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center}
+.filters .label{color:var(--slate);margin-right:.3rem}
+.chip{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  border:1px solid var(--seam);border-radius:999px;padding:.42rem .95rem;color:var(--stone);
+  transition:.18s;
+}
+.chip:hover{border-color:var(--slate);color:var(--parchment)}
+.chip.on{border-color:var(--amethyst);color:var(--lavender);background:color-mix(in srgb,var(--amethyst) 14%,transparent)}
+.result-count{font-family:var(--mono);font-size:.68rem;color:var(--slate);margin-left:auto;letter-spacing:.08em}
+
+/* ============ finding card ============ */
+.finding{
+  border:1px solid var(--seam);border-radius:11px;background:var(--obsidian);
+  margin-bottom:1.15rem;overflow:hidden;
+  display:grid;grid-template-columns:minmax(230px,300px) 1fr;
+  animation:rise .45s ease both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.finding.hidden{display:none}
+
+/* evidence column — gold territory */
+.evidence{
+  border-right:1px solid var(--seam);
+  padding:1.15rem 1.2rem;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--fossil) 4%,transparent),transparent 45%);
+}
+.evidence .label{color:var(--fossil);display:block;margin-bottom:.85rem}
+.commit{margin-bottom:.8rem}
+.commit:last-child{margin-bottom:0}
+.commit b{display:block;font-family:var(--mono);font-size:.8rem;font-weight:500;color:var(--parchment)}
+.commit span{font-family:var(--mono);font-size:.68rem;color:var(--fossil);opacity:.85}
+
+/* inference column — purple territory */
+.inference{padding:1.15rem 1.4rem 1.25rem}
+.inf-head{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:.7rem;flex-wrap:wrap}
+.inf-head .label{color:var(--amethyst)}
+.badge{
+  font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;
+  border-radius:999px;padding:.28rem .75rem;border:1px solid;
+}
+.badge.hi{color:var(--mist);border-color:color-mix(in srgb,var(--mist) 55%,transparent);background:color-mix(in srgb,var(--mist) 9%,transparent)}
+.badge.md{color:var(--lavender);border-color:color-mix(in srgb,var(--lavender) 40%,transparent);background:color-mix(in srgb,var(--lavender) 7%,transparent)}
+.badge.lo{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 55%,transparent);background:color-mix(in srgb,var(--amber) 9%,transparent)}
+.inference p{color:var(--stone);font-size:.95rem;max-width:60ch}
+.inference p code{
+  font-family:var(--mono);font-size:.82em;background:var(--void);
+  border:1px solid var(--seam);border-radius:5px;padding:.1em .4em;color:var(--parchment);
+}
+.flag{
+  font-family:var(--mono);font-size:.74rem;color:var(--amber);
+  margin-top:.85rem;line-height:1.7;
+}
+.radius{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:1rem;align-items:center}
+.radius .label{color:var(--slate)}
+.radius span:not(.label){
+  font-family:var(--mono);font-size:.66rem;border:1px solid var(--seam);border-radius:5px;
+  padding:.22rem .55rem;color:var(--stone);background:var(--void);
+}
+.card-actions{margin-top:1.05rem;display:flex;gap:1.3rem}
+.card-actions button{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--lavender);border-bottom:1px solid transparent;padding-bottom:1px;transition:.18s;
+}
+.card-actions button:hover{border-color:var(--lavender)}
+
+/* ============ knowledge gap — the discovery ============ */
+.gap-card{
+  border:1px dashed color-mix(in srgb,var(--fossil) 60%,transparent);
+  border-radius:11px;background:linear-gradient(135deg,color-mix(in srgb,var(--fossil) 6%,var(--obsidian)),var(--obsidian) 60%);
+  padding:1.4rem 1.5rem;margin-bottom:1.15rem;
+  animation:rise .45s ease both;
+}
+.gap-card .label{color:var(--fossil);display:block;margin-bottom:.6rem}
+.gap-card h3{font-size:1.1rem;font-weight:600;margin-bottom:.35rem}
+.gap-card p{color:var(--stone);font-size:.95rem;max-width:62ch}
+.gap-card p code{font-family:var(--mono);font-size:.82em;background:var(--void);border:1px solid var(--seam);border-radius:5px;padding:.1em .4em;color:var(--parchment)}
+.gap-foot{display:flex;align-items:center;gap:1.3rem;margin-top:1rem;flex-wrap:wrap}
+.gap-foot .who{font-family:var(--mono);font-size:.72rem;color:var(--fossil)}
+.gap-foot button{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+  border:1px solid var(--fossil);border-radius:7px;padding:.5rem 1rem;color:var(--fossil);transition:.18s;
+}
+.gap-foot button:hover{background:color-mix(in srgb,var(--fossil) 14%,transparent)}
+
+/* ============ footer ============ */
+.report-foot{
+  margin-top:2.2rem;padding-top:1.4rem;border-top:1px solid var(--seam);
+  font-family:var(--mono);font-size:.68rem;color:var(--slate);letter-spacing:.08em;
+  display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+}
+
+/* ============ responsive ============ */
+@media(max-width:760px){
+  .finding{grid-template-columns:1fr}
+  .evidence{border-right:none;border-bottom:1px solid var(--seam)}
+  .dig{grid-template-columns:1fr}
+  .dig-stats{width:100%;justify-content:space-between}
+  .stat{flex:1;min-width:0;padding:.7rem .4rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .finding,.gap-card{animation:none}
+  *{transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <span class="wordmark">VESTIGE</span>
+  <span class="repo-chip"><b>acme/checkout-service</b><span class="dot">·</span>main<span class="dot">·</span>1,482 commits read</span>
+  <div class="mode" role="tablist" aria-label="Mode">
+    <button class="on" role="tab" aria-selected="true">Archaeology</button>
+    <button role="tab" aria-selected="false">Prevention</button>
+  </div>
+</header>
+
+<main class="shell">
+
+  <!-- dig summary -->
+  <section class="dig">
+    <div>
+      <h1>The dig is complete. <em>Here's what the history admits to.</em></h1>
+      <p class="dig-meta">ANALYZED JUN 10 2026 · 14 MIN AGO · 6 AUTHORS · 2.5 YEARS OF HISTORY</p>
+    </div>
+    <div class="dig-stats" aria-label="Findings by confidence">
+      <div class="stat hi"><b>12</b><span>High</span></div>
+      <div class="stat md"><b>23</b><span>Medium</span></div>
+      <div class="stat lo"><b>8</b><span>Low</span></div>
+      <div class="stat gap"><b>3</b><span>Gaps</span></div>
+    </div>
+  </section>
+
+  <!-- filters -->
+  <div class="filters" id="filters">
+    <span class="label">Show</span>
+    <button class="chip on" data-tier="all">All findings</button>
+    <button class="chip" data-tier="hi">High</button>
+    <button class="chip" data-tier="md">Medium</button>
+    <button class="chip" data-tier="lo">Low</button>
+    <button class="chip" data-tier="gap">Knowledge gaps</button>
+    <span class="result-count" id="count">46 findings</span>
+  </div>
+
+  <!-- HIGH confidence finding -->
+  <article class="finding" data-tier="hi">
+    <div class="evidence">
+      <span class="label">Evidence · 3 commits · auth/</span>
+      <div class="commit"><b>add null check</b><span>a3f9c2b · auth/parseToken.ts</span></div>
+      <div class="commit"><b>update validation</b><span>b81e04a · auth/validateUser.ts</span></div>
+      <div class="commit"><b>fix</b><span>c29f17d · middleware/auth.ts</span></div>
+    </div>
+    <div class="inference">
+      <div class="inf-head">
+        <span class="label">Vestige analysis</span>
+        <span class="badge hi">High confidence</span>
+      </div>
+      <p>A null check was added to <code>parseToken()</code>, a type guard introduced in
+      <code>validateUser()</code>, and an error catch wrapped around the middleware call.
+      Three defensive changes landing together is consistent with a runtime crash on an
+      unexpected null return — this was a production fix, not refactoring.</p>
+      <div class="radius">
+        <span class="label">Blast radius</span>
+        <span>auth/</span><span>middleware/</span><span>4 call sites</span>
+      </div>
+      <div class="card-actions">
+        <button>View full evidence</button>
+        <button>Copy as PR comment</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- MEDIUM confidence finding -->
+  <article class="finding" data-tier="md">
+    <div class="evidence">
+      <span class="label">Evidence · 1 commit · api/</span>
+      <div class="commit"><b>switch to batch endpoint</b><span>e77d10f · api/orders.ts</span></div>
+    </div>
+    <div class="inference">
+      <div class="inf-head">
+        <span class="label">Vestige analysis</span>
+        <span class="badge md">Medium confidence</span>
+      </div>
+      <p>Sequential per-order requests were replaced with a single batched call in
+      <code>fetchOrders()</code>. The commit lands two days after a dependency bump that
+      introduced rate limiting — the timing suggests this was a response to throttled
+      requests, though no error handling for 429s was added alongside it.</p>
+      <p class="flag">⚠ Timing-based inference. The commit message does not state a reason.</p>
+      <div class="radius">
+        <span class="label">Blast radius</span>
+        <span>api/orders.ts</span><span>checkout flow</span>
+      </div>
+      <div class="card-actions">
+        <button>View full evidence</button>
+        <button>Copy as PR comment</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- LOW confidence finding -->
+  <article class="finding" data-tier="lo">
+    <div class="evidence">
+      <span class="label">Evidence · 1 commit · utils/</span>
+      <div class="commit"><b>.</b><span>91ac3be · utils/currency.ts</span></div>
+    </div>
+    <div class="inference">
+      <div class="inf-head">
+        <span class="label">Vestige analysis</span>
+        <span class="badge lo">Low confidence</span>
+      </div>
+      <p>Floating-point arithmetic in <code>formatPrice()</code> was replaced with
+      integer-cent math. The commit message is a single period, so intent is unverifiable —
+      but this pattern most often follows a rounding bug reaching a customer-facing total.</p>
+      <p class="flag">⚠ No incident report found. Decision inferred from history alone.</p>
+      <div class="radius">
+        <span class="label">Blast radius</span>
+        <span>utils/currency.ts</span><span>11 call sites</span><span>pricing display</span>
+      </div>
+      <div class="card-actions">
+        <button>View full evidence</button>
+        <button>Copy as PR comment</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- KNOWLEDGE GAP — the discovery -->
+  <article class="gap-card" data-tier="gap">
+    <span class="label">◈ Knowledge gap unearthed</span>
+    <h3>The history doesn't know why <code>payments/retry.ts</code> caps at 3 attempts.</h3>
+    <p>The cap appeared in a 4,000-line vendor-migration commit with no related discussion,
+    no linked issue, and no test asserting the limit. This decision exists only in someone's
+    head — which means it's one departure away from existing nowhere.</p>
+    <div class="gap-foot">
+      <span class="who">Last touched by @sofia-r · 14 months ago</span>
+      <button>Request acknowledgment</button>
+      <button>Document what's known</button>
+    </div>
+  </article>
+
+  <footer class="report-foot">
+    <span>VESTIGE · EVERY CHANGE LEAVES A VESTIGE</span>
+    <span>GOLD = WHAT HAPPENED · PURPLE = WHAT IT MEANS</span>
+  </footer>
+
+</main>
+
+<script>
+/* tier filtering */
+const chips = document.querySelectorAll('.chip');
+const cards = document.querySelectorAll('[data-tier]');
+const count = document.getElementById('count');
+const findingCards = Array.from(cards).filter(c => c.matches('article'));
+
+chips.forEach(chip => chip.addEventListener('click', () => {
+  chips.forEach(c => c.classList.remove('on'));
+  chip.classList.add('on');
+  const tier = chip.dataset.tier;
+  let shown = 0;
+  findingCards.forEach(card => {
+    const show = tier === 'all' || card.dataset.tier === tier;
+    card.classList.toggle('hidden', !show);
+    if (show) shown++;
+  });
+  count.textContent = tier === 'all' ? '46 findings' : shown + ' shown of this tier';
+}));
+</script>
+</body>
+</html>

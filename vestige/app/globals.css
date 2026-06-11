@@ -7,6 +7,19 @@
   --vestige-stone: #A89968;
   --vestige-crystal: #E8D4F8;
   --vestige-dark: #1a1a1a;
+
+  /* Archaeology palette */
+  --arch-void: #0e0c12;
+  --arch-obsidian: #16131c;
+  --arch-seam: #2a2435;
+  --arch-parchment: #eae6dd;
+  --arch-stone: #9b94a4;
+  --arch-slate: #6b6477;
+  --arch-lavender: #d9c7f2;
+  --arch-amethyst: #8e6cc9;
+  --arch-fossil: #b5a268;
+  --arch-amber: #cf8a4a;
+  --arch-mist: #7fae9a;
 }
 
 @theme inline {

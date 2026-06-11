@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/nav/Navbar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// We assign the exact variable names Tailwind expects internally
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
+  variable: "--font-sans", 
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
+  variable: "--font-mono", 
 });
 
 export const metadata: Metadata = {
@@ -24,14 +25,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className={`${geistSans.className} min-h-full flex flex-col`}>
-          <Navbar />
-          {children}
-        </body>
+    <html lang="en">
+      {/* 3. Applied the font variables to the body */}
+      <body className={`${plusJakartaSans.variable} ${geistMono.variable} antialiased min-h-full flex flex-col`}>
+        <Navbar />
+        {children}
+      </body>
     </html>
   );
 }
