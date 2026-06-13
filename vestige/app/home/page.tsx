@@ -371,6 +371,8 @@ export default function HomePage() {
         style={{ background: "var(--background)" }}
       >
         <div className="max-w-3xl mx-auto">
+          <p className="text-2xl text-red-800 font-bold"
+          >This section is under construction</p>
           <p
             className="text-2xl uppercase  mb-12"
             style={{ color: "var(--vestige-stone)" }}
@@ -433,10 +435,10 @@ export default function HomePage() {
             className="mt-12 text-base leading-relaxed"
             style={{ color: "#a09a94" }}
           >
-             you&apos;rehat matte
-            working in a codebase you didn&apos;t write. Vestige answers both,
+             When your working in a codebase you didn&apos;t write. Vestige answers both,
             in order, and gets out of your way.
           </p>
+            <p className="text-lg text-red-800">Above under construction</p>
         </div>
       </section>
 
