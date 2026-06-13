@@ -259,7 +259,7 @@ export default function HomePage() {
             className="text-3xl md:text-4xl text-center font-semibold mb-16"
             style={{ color: "$f5f1ed" }}
           >
-            Feel confident where you put your code wont<br /><span style={{ color: "var(--vestige-crystal)" }}> break anything.</span> 
+            Feel confident where you put your code won&apos;t<br /><span style={{ color: "var(--vestige-crystal)" }}> break anything.</span> 
           </p>
 
           {/* Placement example */}
