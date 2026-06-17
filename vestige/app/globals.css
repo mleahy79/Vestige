@@ -41,7 +41,10 @@ body {
 }
 
 /* V mark trace → develop → reveal sequence */
-@keyframes trace { to { stroke-dashoffset: 0; } }
+@keyframes trace {
+  from { stroke-dashoffset: 460; }
+  to   { stroke-dashoffset: 0; }
+}
 @keyframes develop {
   0%   { opacity: 0; filter: blur(10px) brightness(1.4) contrast(0.6) saturate(0.25) sepia(0.35); }
   45%  { opacity: 0.6; filter: blur(4px) brightness(1.2) contrast(0.8) saturate(0.5) sepia(0.2); }
@@ -60,7 +63,7 @@ body {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   opacity: 0;
   animation: develop 2s 2.3s ease-in-out forwards;
 }
