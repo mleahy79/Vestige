@@ -108,6 +108,10 @@ Write a detailed narrative history of this codebase. Structure your response as 
 
 Be specific and reference real commit messages and PR titles. When you're inferring rather than reading, say so clearly. Write for a senior developer who just inherited this codebase and needs to understand not just what it does, but why it exists the way it does.
 
+For each finding, assign two independent scores:
+- confidence: how strongly the git artifacts support this finding (High = multiple clear commits/PRs, Medium = partial evidence, Low = inferred from sparse signals)
+- riskLevel: how risky this finding is to the codebase's security, stability, or maintainability (High = auth/secrets/breaking changes/deleted tests, Medium = dependency drift/undocumented pivots/coupling, Low = style/docs/minor patterns)
+
 Return a JSON object with this exact shape — no preamble, no markdown fences, valid JSON only:
 {
   "narrative": "the full narrative as markdown",
@@ -116,6 +120,7 @@ Return a JSON object with this exact shape — no preamble, no markdown fences, 
       "title": "short finding title",
       "detail": "one paragraph explanation",
       "confidence": "High",
+      "riskLevel": "Medium",
       "evidence": "commit sha or PR that supports this",
       "inferred": false,
       "flag": "optional risk or undocumented decision note"

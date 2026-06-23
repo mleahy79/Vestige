@@ -38,6 +38,7 @@ interface Finding {
   title: string;
   detail: string;
   confidence: "High" | "Medium" | "Low";
+  riskLevel: "High" | "Medium" | "Low";
   evidence: string;
   inferred: boolean;
   flag?: string;
@@ -54,15 +55,231 @@ interface AnalysisResult {
 type Tier = "all" | "hi" | "md" | "lo";
 
 const BADGE = {
-  High:   { color: "var(--arch-mist)",     border: "rgba(127,174,154,0.55)",  bg: "rgba(127,174,154,0.09)" },
-  Medium: { color: "var(--arch-lavender)",  border: "rgba(217,199,242,0.4)",   bg: "rgba(217,199,242,0.07)" },
-  Low:    { color: "var(--arch-amber)",     border: "rgba(207,138,74,0.55)",   bg: "rgba(207,138,74,0.09)" },
+  High:   { color: "var(--arch-mist)",    border: "rgba(127,174,154,0.55)", bg: "rgba(127,174,154,0.09)" },
+  Medium: { color: "var(--arch-lavender)", border: "rgba(217,199,242,0.4)",  bg: "rgba(217,199,242,0.07)" },
+  Low:    { color: "var(--arch-amber)",   border: "rgba(207,138,74,0.55)",  bg: "rgba(207,138,74,0.09)"  },
+} as const;
+
+const RISK_BADGE = {
+  High:   { color: "#e88080",           border: "rgba(232,128,128,0.45)", bg: "rgba(232,128,128,0.09)" },
+  Medium: { color: "var(--arch-amber)", border: "rgba(207,138,74,0.45)",  bg: "rgba(207,138,74,0.09)"  },
+  Low:    { color: "var(--arch-slate)", border: "rgba(120,130,150,0.35)", bg: "rgba(120,130,150,0.06)" },
 } as const;
 
 const TIER_MAP: Record<string, Tier> = { High: "hi", Medium: "md", Low: "lo" };
 
-function FindingCard({ f }: { f: Finding }) {
+function matchEvidence(evidenceStr: string, commits: Commit[], prs: PR[]) {
+  const shaPatterns = (evidenceStr.match(/\b[0-9a-f]{7,40}\b/gi) || [])
+    .map((s) => s.toLowerCase().substring(0, 7));
+  const prNumbers = (evidenceStr.match(/#(\d+)/g) || [])
+    .map((m) => parseInt(m.slice(1)));
+  return {
+    matchedCommits: commits.filter((c) =>
+      shaPatterns.some((sha) => c.sha.toLowerCase().startsWith(sha))
+    ),
+    matchedPRs: prs.filter((pr) => prNumbers.includes(pr.number)),
+  };
+}
+
+function EvidencePanel({
+  finding,
+  commits,
+  prs,
+  onClose,
+}: {
+  finding: Finding;
+  commits: Commit[];
+  prs: PR[];
+  onClose: () => void;
+}) {
+  const { matchedCommits, matchedPRs } = matchEvidence(finding.evidence, commits, prs);
+  const badge = BADGE[finding.confidence];
+  const risk = RISK_BADGE[finding.riskLevel ?? "Low"];
+
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 999 }}
+      />
+      <aside style={{
+        position: "fixed", top: 0, right: 0,
+        width: "clamp(320px, 38vw, 560px)",
+        height: "100vh",
+        background: "var(--arch-obsidian)",
+        borderLeft: "1px solid var(--arch-seam)",
+        overflowY: "auto", zIndex: 1000,
+        padding: "1.75rem 1.5rem",
+        display: "flex", flexDirection: "column", gap: "1.4rem",
+      }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
+          <div>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: "0.65rem",
+              letterSpacing: "0.18em", textTransform: "uppercase",
+              color: "var(--arch-amethyst)", display: "block", marginBottom: "0.5rem",
+            }}>
+              Evidence
+            </span>
+            <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--arch-parchment)", lineHeight: 1.35 }}>
+              {finding.title}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              fontFamily: "var(--font-mono)", fontSize: "0.65rem",
+              letterSpacing: "0.14em", textTransform: "uppercase",
+              color: "var(--arch-slate)", background: "none",
+              border: "1px solid var(--arch-seam)", borderRadius: "6px",
+              padding: "0.4rem 0.7rem", cursor: "pointer", flexShrink: 0,
+            }}
+          >
+            Close
+          </button>
+        </div>
+
+        {/* Badges */}
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+          <span style={{
+            fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em",
+            textTransform: "uppercase", borderRadius: "999px", padding: "0.28rem 0.75rem",
+            border: `1px solid ${badge.border}`, color: badge.color, background: badge.bg,
+          }}>
+            {finding.confidence} confidence
+          </span>
+          <span style={{
+            fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em",
+            textTransform: "uppercase", borderRadius: "999px", padding: "0.28rem 0.75rem",
+            border: `1px solid ${risk.border}`, color: risk.color, background: risk.bg,
+          }}>
+            {finding.riskLevel ?? "unknown"} risk
+          </span>
+        </div>
+
+        {/* Evidence signal */}
+        <div style={{
+          background: "rgba(181,162,104,0.05)", border: "1px solid rgba(181,162,104,0.15)",
+          borderRadius: "8px", padding: "1rem 1.1rem",
+        }}>
+          <span style={{
+            fontFamily: "var(--font-mono)", fontSize: "0.65rem", letterSpacing: "0.16em",
+            textTransform: "uppercase", color: "var(--arch-fossil)", display: "block", marginBottom: "0.5rem",
+          }}>
+            Evidence signal
+          </span>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.8rem", color: "var(--arch-parchment)", lineHeight: 1.6 }}>
+            {finding.evidence}
+          </p>
+        </div>
+
+        {/* Matched commits */}
+        {matchedCommits.length > 0 && (
+          <div>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: "0.65rem", letterSpacing: "0.16em",
+              textTransform: "uppercase", color: "var(--arch-fossil)", display: "block", marginBottom: "0.75rem",
+            }}>
+              Linked commits ({matchedCommits.length})
+            </span>
+            {matchedCommits.map((c) => (
+              <div key={c.sha} style={{
+                border: "1px solid var(--arch-seam)", borderRadius: "8px",
+                padding: "0.85rem 1rem", marginBottom: "0.6rem",
+                background: "rgba(255,255,255,0.015)",
+              }}>
+                <p style={{ fontSize: "0.85rem", color: "var(--arch-parchment)", lineHeight: 1.4, marginBottom: "0.45rem" }}>
+                  {c.message.split("\n")[0]}
+                </p>
+                <div style={{ display: "flex", gap: "12px", fontSize: "0.7rem", color: "var(--arch-slate)", fontFamily: "var(--font-mono)" }}>
+                  <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--arch-fossil)", textDecoration: "none" }}>
+                    {c.sha.substring(0, 7)}
+                  </a>
+                  <span>{c.author}</span>
+                  <span>{c.date ? new Date(c.date).toLocaleDateString() : ""}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Matched PRs */}
+        {matchedPRs.length > 0 && (
+          <div>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: "0.65rem", letterSpacing: "0.16em",
+              textTransform: "uppercase", color: "var(--arch-fossil)", display: "block", marginBottom: "0.75rem",
+            }}>
+              Linked pull requests ({matchedPRs.length})
+            </span>
+            {matchedPRs.map((pr) => (
+              <div key={pr.number} style={{
+                border: "1px solid var(--arch-seam)", borderRadius: "8px",
+                padding: "0.85rem 1rem", marginBottom: "0.6rem",
+                background: "rgba(255,255,255,0.015)",
+              }}>
+                <div style={{ display: "flex", gap: "8px", alignItems: "flex-start", marginBottom: "6px" }}>
+                  <span style={{
+                    fontFamily: "var(--font-mono)", fontSize: "0.6rem", padding: "2px 8px",
+                    borderRadius: "999px", flexShrink: 0,
+                    background: pr.merged_at ? "rgba(142,108,201,0.2)" : "rgba(255,255,255,0.04)",
+                    color: pr.merged_at ? "var(--arch-lavender)" : "var(--arch-slate)",
+                  }}>
+                    {pr.merged_at ? "merged" : "closed"}
+                  </span>
+                  <a
+                    href={pr.url} target="_blank" rel="noopener noreferrer"
+                    style={{ color: "var(--arch-parchment)", fontSize: "0.85rem", textDecoration: "none", lineHeight: 1.4 }}
+                  >
+                    {pr.title}
+                  </a>
+                </div>
+                {pr.body && (
+                  <p style={{ fontSize: "0.78rem", color: "var(--arch-stone)", lineHeight: 1.6, marginTop: "0.4rem" }}>
+                    {pr.body.substring(0, 250)}{pr.body.length > 250 ? "…" : ""}
+                  </p>
+                )}
+                <div style={{ fontSize: "0.7rem", color: "var(--arch-slate)", fontFamily: "var(--font-mono)", marginTop: "0.4rem" }}>
+                  #{pr.number} · {pr.user}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {matchedCommits.length === 0 && matchedPRs.length === 0 && (
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.78rem", color: "var(--arch-slate)", lineHeight: 1.6 }}>
+            No specific commits or PRs were matched to this finding. The evidence signal above describes the basis for this analysis.
+          </p>
+        )}
+      </aside>
+    </>
+  );
+}
+
+function FindingCard({
+  f,
+  onViewEvidence,
+}: {
+  f: Finding;
+  onViewEvidence: (f: Finding) => void;
+}) {
   const badge = BADGE[f.confidence];
+  const risk = RISK_BADGE[f.riskLevel ?? "Low"];
+
+  function copyAsPRComment() {
+    const lines = [
+      `**${f.title}** — *${f.confidence} Confidence · ${f.riskLevel ?? "Unknown"} Risk*`,
+      "",
+      f.detail,
+      "",
+      `Evidence: ${f.evidence}`,
+    ];
+    if (f.flag) lines.push("", `⚠ ${f.flag}`);
+    lines.push("", "---", "*Flagged by Vestige*");
+    navigator.clipboard.writeText(lines.join("\n")).catch(() => {});
+  }
 
   return (
     <article style={{
@@ -130,19 +347,24 @@ function FindingCard({ f }: { f: Finding }) {
           }}>
             Vestige analysis
           </span>
-          <span style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "0.62rem",
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            borderRadius: "999px",
-            padding: "0.28rem 0.75rem",
-            border: `1px solid ${badge.border}`,
-            color: badge.color,
-            background: badge.bg,
-          }}>
-            {f.confidence} confidence
-          </span>
+          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: "0.62rem",
+              letterSpacing: "0.14em", textTransform: "uppercase",
+              borderRadius: "999px", padding: "0.28rem 0.75rem",
+              border: `1px solid ${badge.border}`, color: badge.color, background: badge.bg,
+            }}>
+              {f.confidence} confidence
+            </span>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: "0.62rem",
+              letterSpacing: "0.14em", textTransform: "uppercase",
+              borderRadius: "999px", padding: "0.28rem 0.75rem",
+              border: `1px solid ${risk.border}`, color: risk.color, background: risk.bg,
+            }}>
+              {f.riskLevel ?? "?"} risk
+            </span>
+          </div>
         </div>
 
         <p style={{
@@ -167,9 +389,13 @@ function FindingCard({ f }: { f: Finding }) {
         )}
 
         <div style={{ marginTop: "1.05rem", display: "flex", gap: "1.3rem" }}>
-          {(["View full evidence", "Copy as PR comment"] as const).map((label) => (
+          {([
+            { label: "View full evidence", action: () => onViewEvidence(f) },
+            { label: "Copy as PR comment", action: copyAsPRComment },
+          ]).map(({ label, action }) => (
             <button
               key={label}
+              onClick={action}
               style={{
                 fontFamily: "var(--font-mono)",
                 fontSize: "0.7rem",
@@ -206,6 +432,7 @@ export default function HistoryPage() {
   });
   const [activeTier, setActiveTier] = useState<Tier>("all");
   const [showCommits, setShowCommits] = useState(false);
+  const [evidenceFinding, setEvidenceFinding] = useState<Finding | null>(null);
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -235,6 +462,7 @@ export default function HistoryPage() {
     setResult(null);
     setError(null);
     setRepoUrl("");
+    setEvidenceFinding(null);
     try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
   }
 
@@ -243,7 +471,7 @@ export default function HistoryPage() {
     return (
       <main style={{ minHeight: "100vh", background: "var(--arch-void)", color: "var(--arch-parchment)" }}>
         <div style={{ maxWidth: "800px", margin: "0 auto", padding: "80px 24px", textAlign: "center" }}>
-            <DotLottieReact src="/loading.lottie" loop autoplay style={{ width: 220, height: 220, margin: "0 auto" }} />
+          <DotLottieReact src="/loading.lottie" loop autoplay style={{ width: 220, height: 220, margin: "0 auto" }} />
           <h2 style={{ fontFamily: "var(--font-mono)", fontSize: "1rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--arch-lavender)", marginBottom: "12px" }}>
             Reading the history
           </h2>
@@ -394,10 +622,10 @@ export default function HistoryPage() {
 
           <div style={{ display: "flex", gap: "1px", background: "var(--arch-seam)", border: "1px solid var(--arch-seam)", borderRadius: "9px", overflow: "hidden" }}>
             {[
-              { val: counts.hi,  label: "High",   color: "var(--arch-mist)" },
-              { val: counts.md,  label: "Medium",  color: "var(--arch-lavender)" },
-              { val: counts.lo,  label: "Low",     color: "var(--arch-amber)" },
-              { val: findings.length, label: "Total", color: "var(--arch-fossil)" },
+              { val: counts.hi,       label: "High",   color: "var(--arch-mist)" },
+              { val: counts.md,       label: "Medium", color: "var(--arch-lavender)" },
+              { val: counts.lo,       label: "Low",    color: "var(--arch-amber)" },
+              { val: findings.length, label: "Total",  color: "var(--arch-fossil)" },
             ].map(({ val, label, color }) => (
               <div key={label} style={{ background: "var(--arch-obsidian)", padding: "0.8rem 1.15rem", textAlign: "center", minWidth: "80px" }}>
                 <b style={{ display: "block", fontSize: "1.35rem", fontWeight: 600, lineHeight: 1.1, color }}>{val}</b>
@@ -460,7 +688,7 @@ export default function HistoryPage() {
 
         {/* Finding cards */}
         {visibleFindings.map((f, i) => (
-          <FindingCard key={i} f={f} />
+          <FindingCard key={i} f={f} onViewEvidence={setEvidenceFinding} />
         ))}
 
         {visibleFindings.length === 0 && (
@@ -565,6 +793,16 @@ export default function HistoryPage() {
               </div>
             )}
           </section>
+        )}
+
+        {/* Evidence panel */}
+        {evidenceFinding && (
+          <EvidencePanel
+            finding={evidenceFinding}
+            commits={commits}
+            prs={prs}
+            onClose={() => setEvidenceFinding(null)}
+          />
         )}
 
         {/* Footer */}
