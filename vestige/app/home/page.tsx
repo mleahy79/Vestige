@@ -60,7 +60,7 @@ export default function HomePage() {
               className="text-lg md:text-xl max-w-xl leading-relaxed"
               style={{ color: "#a09a94" }}
             >
-              Full git-history due diligence for PE and growth equity — cited
+              Full git-history due diligence for PE and growth equity with cited
               findings, confidence-scored, and signed off before your deal team
               ever sees them.
             </p>
@@ -119,7 +119,7 @@ export default function HomePage() {
               The data room shows you what the seller chose to show you. The commit history doesn&apos;t have a curator.
             </h2>
             <p className="text-base leading-relaxed" style={{ color: "#a09a94" }}>
-              Vestige reads a target&apos;s full git history and surfaces what actually happened — the shortcuts, the deferred fixes, the migrations that quietly stalled — with cited evidence and a named human sign-off before any of it reaches your deal team.
+              Vestige reads a target&apos;s full git history and surfaces what actually happened the shortcuts, the deferred fixes, the migrations that quietly stalled with cited evidence and a named human sign-off before any of it reaches your deal team.
             </p>
             <div className="flex items-center gap-5 mt-2 flex-wrap">
               <button
@@ -206,13 +206,13 @@ export default function HomePage() {
       <section className="px-6 py-28" style={{ background: "var(--background)" }}>
         <div className="max-w-xl mx-auto flex flex-col items-center text-center gap-0">
           <p className="text-2xl md:text-3xl font-semibold leading-snug w-full" style={{ color: "#a09a94", paddingBottom: "40px", borderBottom: "1px solid var(--vestige-purple)" }}>
-            <span style={{ color: "var(--vestige-crystal)" }}>Vestige</span> gives you the story of how this codebase became what it is today.
+            <span style={{ color: "var(--vestige-crystal)" }}>Vestige</span> reads the entire repository and sorts the information to give you the history of how this codebase became what it is today.
           </p>
           <p className="text-2xl md:text-3xl font-semibold leading-snug w-full" style={{ color: "var(--foreground)", paddingTop: "40px", paddingBottom: "40px", borderBottom: "1px solid var(--vestige-purple)" }}>
-            But a story isn&apos;t a risk assessment. Your report needs to say where this code is fragile.
+            We narrate the history and display all the changes with preliminarily findings, but the story isn&apos;t the risk assessment.
           </p>
           <p className="text-2xl md:text-3xl font-semibold leading-snug w-full" style={{ color: "#a09a94", paddingTop: "40px" }}>
-            That&apos;s why we built the <span style={{ color: "var(--vestige-crystal)" }}>Risk Surface.</span>
+            The story is a diagram that aids in finding and assessing the risks. Your report is what <span style={{ color: "var(--vestige-crystal)" }}>verifies</span> where this code is fragile.  
           </p>
         </div>
       </section>
@@ -225,7 +225,7 @@ export default function HomePage() {
             className="text-xs font-mono uppercase tracking-widest"
             style={{ color: "#8e6cc9" }}
           >
-            What we guarantee, and what we don&apos;t
+            What we do, and what we don&apos;t
           </p>
           <h2
             className="text-4xl md:text-5xl font-bold leading-tight italic"
@@ -239,8 +239,8 @@ export default function HomePage() {
             style={{ color: "#888" }}
           >
             No tool can responsibly predict whether an acquisition will perform, and
-            we&apos;re not going to claim Vestige is the exception. What we guarantee
-            is complete coverage of the commit history — every commit reviewed and
+            we&apos;re not going to claim Vestige is the exception. What we give you
+            is complete coverage of the commit history, every commit reviewed and
             categorized, not a sample, not a highlight reel selected by the
             seller&apos;s engineering team. The picture is yours to interpret. We just
             make sure it&apos;s the whole one.
@@ -336,7 +336,7 @@ export default function HomePage() {
               </div>
               <p className="text-sm leading-relaxed" style={{ color: "#a09a94" }}>
                 <code className="text-xs px-1 py-0.5 rounded" style={{ background: "#2a2a2a", color: "var(--vestige-crystal)" }}>billing/charge.ts</code>{" "}
-                is the most-changed file in the repo and the most depended-on —
+                is the most-changed file in the repo and the most depended-on,
                 31 modules import it, yet the three engineers who shaped it have
                 all left. Any change here ripples across billing with no one left
                 who remembers why it works.
@@ -369,7 +369,7 @@ export default function HomePage() {
             Send read access to a target&apos;s repository, or run it yourselves if
             your firm prefers to keep access in-house. We&apos;ll turn around a sample
             report with the same confidence tiers, citations, and sign-off layer your
-            deal team would see in production. No slide deck — just the report.
+            deal team would see in production. No slide deck just the report.
           </p>
           <div className="flex gap-4 mt-2 flex-wrap justify-center">
             <button
