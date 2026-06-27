@@ -426,6 +426,7 @@ export default function HistoryPage() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null")?.repoUrl ?? ""; } catch { return ""; }
   });
   const [loading, setLoading] = useState(false);
+  const [stage, setStage] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null")?.result ?? null; } catch { return null; }
@@ -438,6 +439,7 @@ export default function HistoryPage() {
     e.preventDefault();
     if (!repoUrl.trim()) return;
     setLoading(true);
+    setStage("Starting analysis…");
     setError(null);
     setResult(null);
     try {
@@ -446,15 +448,50 @@ export default function HistoryPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ repoUrl: repoUrl.trim() }),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error || "Analysis failed"); return; }
-      setResult(data);
-      setActiveTier("all");
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ result: data, repoUrl: repoUrl.trim() })); } catch { /* ignore */ }
+
+      // Non-streaming error (e.g. invalid URL, repo not found)
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError((data as { error?: string }).error || "Analysis failed");
+        return;
+      }
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const event = JSON.parse(line) as {
+              stage: string;
+              message?: string;
+              result?: AnalysisResult;
+            };
+            if (event.stage === "complete" && event.result) {
+              setResult(event.result);
+              setActiveTier("all");
+              try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ result: event.result, repoUrl: repoUrl.trim() })); } catch { /* ignore */ }
+            } else if (event.stage === "error") {
+              setError(event.message || "Analysis failed");
+            } else if (event.message) {
+              setStage(event.message);
+            }
+          } catch { /* malformed line, skip */ }
+        }
+      }
     } catch {
       setError("Network error — could not reach the server.");
     } finally {
       setLoading(false);
+      setStage("");
     }
   }
 
@@ -475,8 +512,8 @@ export default function HistoryPage() {
           <h2 style={{ fontFamily: "var(--font-mono)", fontSize: "1rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--arch-lavender)", marginBottom: "12px" }}>
             Reading the history
           </h2>
-          <p style={{ color: "var(--arch-stone)", fontSize: "0.9rem" }}>
-            Fetching commits and PRs, then tracing the decisions…
+          <p style={{ color: "var(--arch-stone)", fontSize: "0.9rem", minHeight: "1.4em", transition: "opacity 0.3s" }}>
+            {stage || "Starting analysis…"}
           </p>
         </div>
       </main>
