@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 const STORAGE_KEY = "vestige_archaeology_result";
@@ -422,18 +422,22 @@ function FindingCard({
 }
 
 export default function HistoryPage() {
-  const [repoUrl, setRepoUrl] = useState<string>(() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null")?.repoUrl ?? ""; } catch { return ""; }
-  });
+  const [repoUrl, setRepoUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<AnalysisResult | null>(() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null")?.result ?? null; } catch { return null; }
-  });
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTier, setActiveTier] = useState<Tier>("all");
   const [showCommits, setShowCommits] = useState(false);
   const [evidenceFinding, setEvidenceFinding] = useState<Finding | null>(null);
+
+  useEffect(() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
+      if (cached?.result) setResult(cached.result);
+      if (cached?.repoUrl) setRepoUrl(cached.repoUrl);
+    } catch { /* ignore */ }
+  }, []);
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();

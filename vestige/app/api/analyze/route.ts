@@ -1,4 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   const trimmed = url.trim().replace(/\.git$/, "");
@@ -24,13 +26,20 @@ export async function POST(request: Request) {
   }
 
   const { owner, repo } = parsed;
+
+  // Prefer the user's OAuth token (private repo access) over the server token
+  const session = await getServerSession(authOptions);
+  const token =
+    (session as typeof session & { accessToken?: string })?.accessToken ||
+    process.env.GITHUB_TOKEN;
+
   const ghHeaders: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
     "User-Agent": "Vestige/1.0",
   };
-  if (process.env.GITHUB_TOKEN) {
-    ghHeaders["Authorization"] = `Bearer ${process.env.GITHUB_TOKEN}`;
+  if (token) {
+    ghHeaders["Authorization"] = `Bearer ${token}`;
   }
 
   const gh = (path: string) =>
