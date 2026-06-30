@@ -113,6 +113,29 @@ export async function POST(request: Request) {
           })
           .join("\n\n");
 
+        // Build contributor map across all commits
+        const contributorMap: Record<string, { commitCount: number; lastActive: string; files: Set<string> }> = {};
+        commits.slice(0, 100).forEach((c, i) => {
+          const name = c.commit.author?.name || "Unknown";
+          const date = (c.commit.author?.date || "").split("T")[0];
+          if (!contributorMap[name]) contributorMap[name] = { commitCount: 0, lastActive: date, files: new Set() };
+          contributorMap[name].commitCount++;
+          if (date > contributorMap[name].lastActive) contributorMap[name].lastActive = date;
+          const detail = commitDetails[i];
+          if (detail?.files) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (detail.files as any[]).forEach((f) => contributorMap[name].files.add(f.filename));
+          }
+        });
+
+        const contributorLines = Object.entries(contributorMap)
+          .sort((a, b) => b[1].commitCount - a[1].commitCount)
+          .map(([name, data]) => {
+            const fileList = Array.from(data.files).slice(0, 10).join(", ");
+            return `${name}: ${data.commitCount} commits, last active ${data.lastActive}, touched files: ${fileList || "(no diff data)"}`;
+          })
+          .join("\n");
+
         const prLines = prs
           .slice(0, 50)
           .map((pr) => {
@@ -139,6 +162,9 @@ ${commitLines || "(no commits found)"}
 
 PULL REQUESTS (${prs.length} closed/merged PRs):
 ${prLines || "(no PRs found)"}
+
+CONTRIBUTOR ANALYSIS (${Object.keys(contributorMap).length} contributors):
+${contributorLines || "(no contributor data)"}
 
 Write a detailed narrative history of this codebase. You have access to real code diffs — use them. When a commit message says "fix" but the diff shows auth middleware being bypassed, say so. When a diff shows a migration being half-applied, name it.
 
@@ -173,7 +199,21 @@ Return a JSON object with this exact shape — no preamble, no markdown fences, 
       "inferred": false,
       "flag": "optional risk or undocumented decision note"
     }
-  ]
+  ],
+  "busFactor": {
+    "summary": "one paragraph on key person risk for this codebase",
+    "contributors": [
+      {
+        "name": "contributor name",
+        "commitCount": 42,
+        "lastActive": "2026-01-15",
+        "dominantFiles": ["src/auth.ts", "src/api/route.ts"],
+        "riskLevel": "High",
+        "riskReason": "sole author of auth layer, last active 6 months ago"
+      }
+    ],
+    "criticalDependencies": ["list of files or systems with single-author risk"]
+  }
 }`;
 
         const client = new Anthropic();
@@ -192,6 +232,7 @@ Return a JSON object with this exact shape — no preamble, no markdown fences, 
 
         let narrative = raw;
         let findings: unknown[] = [];
+        let busFactor: unknown = null;
 
         try {
           // Find the outermost JSON object — more robust than stripping fences
@@ -200,6 +241,7 @@ Return a JSON object with this exact shape — no preamble, no markdown fences, 
           const parsed = JSON.parse(jsonMatch[0]);
           narrative = parsed.narrative || raw;
           findings = Array.isArray(parsed.findings) ? parsed.findings : [];
+          busFactor = parsed.busFactor || null;
           if (findings.length === 0) {
             console.warn("[Vestige] Claude returned 0 findings. Raw length:", raw.length);
           }
@@ -214,6 +256,7 @@ Return a JSON object with this exact shape — no preamble, no markdown fences, 
           result: {
             narrative,
             findings,
+            busFactor,
             repo: {
               full_name: repoData.full_name,
               description: repoData.description,

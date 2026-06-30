@@ -46,9 +46,25 @@ interface Finding {
   flag?: string;
 }
 
+interface BusFactorContributor {
+  name: string;
+  commitCount: number;
+  lastActive: string;
+  dominantFiles: string[];
+  riskLevel: "High" | "Medium" | "Low";
+  riskReason: string;
+}
+
+interface BusFactor {
+  summary: string;
+  contributors: BusFactorContributor[];
+  criticalDependencies: string[];
+}
+
 interface AnalysisResult {
   narrative: string;
   findings: Finding[];
+  busFactor?: BusFactor;
   repo: RepoInfo;
   commits: Commit[];
   prs: PR[];
@@ -1030,6 +1046,108 @@ export default function HistoryPage() {
             New analysis
           </button>
         </div>
+
+        {/* Bus-factor section */}
+        {result.busFactor && (
+          <section style={{ marginBottom: "2rem" }}>
+            <div style={{
+              border: "1px solid var(--arch-seam)",
+              borderRadius: "11px",
+              background: "var(--arch-obsidian)",
+              overflow: "hidden",
+            }}>
+              {/* Header */}
+              <div style={{
+                padding: "1.1rem 1.4rem",
+                borderBottom: "1px solid var(--arch-seam)",
+                background: "linear-gradient(90deg, rgba(232,128,128,0.04) 0%, transparent 60%)",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+              }}>
+                <span style={{
+                  fontFamily: "var(--font-mono)", fontSize: "0.68rem",
+                  letterSpacing: "0.18em", textTransform: "uppercase", color: "#e88080",
+                }}>
+                  Key person risk
+                </span>
+                {result.busFactor.criticalDependencies?.length > 0 && (
+                  <span style={{
+                    fontFamily: "var(--font-mono)", fontSize: "0.62rem",
+                    letterSpacing: "0.12em", textTransform: "uppercase",
+                    color: "var(--arch-slate)",
+                  }}>
+                    {result.busFactor.criticalDependencies.length} critical {result.busFactor.criticalDependencies.length === 1 ? "dependency" : "dependencies"}
+                  </span>
+                )}
+              </div>
+
+              {/* Summary */}
+              <div style={{ padding: "1.1rem 1.4rem", borderBottom: "1px solid var(--arch-seam)" }}>
+                <p style={{ fontSize: "0.9rem", color: "var(--arch-stone)", lineHeight: 1.65, margin: 0 }}>
+                  {result.busFactor.summary}
+                </p>
+              </div>
+
+              {/* Contributors */}
+              <div style={{ padding: "1.1rem 1.4rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {result.busFactor.contributors.map((c) => {
+                  const riskColor = c.riskLevel === "High" ? "#e88080" : c.riskLevel === "Medium" ? "var(--arch-amber)" : "var(--arch-slate)";
+                  const riskBorder = c.riskLevel === "High" ? "rgba(232,128,128,0.35)" : c.riskLevel === "Medium" ? "rgba(207,138,74,0.35)" : "rgba(120,130,150,0.25)";
+                  const riskBg = c.riskLevel === "High" ? "rgba(232,128,128,0.06)" : c.riskLevel === "Medium" ? "rgba(207,138,74,0.06)" : "rgba(120,130,150,0.04)";
+                  return (
+                    <div key={c.name} style={{
+                      display: "grid", gridTemplateColumns: "1fr auto",
+                      gap: "1rem", alignItems: "start",
+                      border: `1px solid ${riskBorder}`,
+                      borderRadius: "8px", padding: "0.9rem 1rem",
+                      background: riskBg,
+                    }}>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.35rem" }}>
+                          <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--arch-parchment)" }}>
+                            {c.name}
+                          </span>
+                          <span style={{
+                            fontFamily: "var(--font-mono)", fontSize: "0.62rem",
+                            letterSpacing: "0.12em", textTransform: "uppercase",
+                            color: riskColor, border: `1px solid ${riskBorder}`,
+                            borderRadius: "999px", padding: "0.2rem 0.6rem", background: riskBg,
+                          }}>
+                            {c.riskLevel} risk
+                          </span>
+                        </div>
+                        <p style={{ fontSize: "0.82rem", color: "var(--arch-stone)", margin: "0 0 0.4rem", lineHeight: 1.5 }}>
+                          {c.riskReason}
+                        </p>
+                        {c.dominantFiles?.length > 0 && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem" }}>
+                            {c.dominantFiles.slice(0, 5).map((f) => (
+                              <span key={f} style={{
+                                fontFamily: "var(--font-mono)", fontSize: "0.65rem",
+                                color: "var(--arch-fossil)", background: "rgba(181,162,104,0.08)",
+                                border: "1px solid rgba(181,162,104,0.15)",
+                                borderRadius: "4px", padding: "0.15rem 0.5rem",
+                              }}>
+                                {f.split("/").pop()}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--arch-parchment)", marginBottom: "0.2rem" }}>
+                          {c.commitCount} commits
+                        </div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: "var(--arch-slate)" }}>
+                          last active {c.lastActive}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Finding cards */}
         {visibleFindings.map((f, i) => (
