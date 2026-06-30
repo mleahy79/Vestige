@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import { useSession } from "next-auth/react";
 
 const STORAGE_KEY = "vestige_archaeology_result";
 
@@ -53,6 +55,13 @@ interface AnalysisResult {
 }
 
 type Tier = "all" | "hi" | "md" | "lo";
+
+interface Signoff {
+  reviewerName: string;
+  reviewerEmail: string;
+  note: string;
+  timestamp: string;
+}
 
 const BADGE = {
   High:   { color: "var(--arch-mist)",    border: "rgba(127,174,154,0.55)", bg: "rgba(127,174,154,0.09)" },
@@ -258,15 +267,251 @@ function EvidencePanel({
   );
 }
 
+function SignoffModal({
+  finding,
+  commits,
+  prs,
+  reviewerName,
+  reviewerEmail,
+  onSign,
+  onClose,
+}: {
+  finding: Finding;
+  commits: Commit[];
+  prs: PR[];
+  reviewerName: string;
+  reviewerEmail: string;
+  onSign: (note: string) => void;
+  onClose: () => void;
+}) {
+  const [note, setNote] = useState("");
+  const [checked, setChecked] = useState(false);
+  const isHighRisk = finding.riskLevel === "High";
+  const canSubmit = note.trim().length > 0 && checked;
+  const { matchedCommits, matchedPRs } = matchEvidence(finding.evidence, commits, prs);
+
+  return createPortal(
+    <div
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "clamp(320px, 90vw, 560px)",
+          background: "var(--arch-obsidian)",
+          border: `1px solid ${isHighRisk ? "rgba(232,128,128,0.4)" : "var(--arch-seam)"}`,
+          borderRadius: "12px",
+          padding: "2rem",
+          display: "flex", flexDirection: "column", gap: "1.25rem",
+          maxHeight: "90vh", overflowY: "auto",
+        }}
+      >
+        {/* Header */}
+        <div>
+          {isHighRisk && (
+            <span style={{
+              display: "inline-block",
+              fontFamily: "var(--font-mono)", fontSize: "0.62rem",
+              letterSpacing: "0.18em", textTransform: "uppercase",
+              color: "#e88080", marginBottom: "0.6rem",
+            }}>
+              ⚠ High risk finding — full review required
+            </span>
+          )}
+          <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--arch-parchment)", lineHeight: 1.35, margin: 0 }}>
+            {finding.title}
+          </h2>
+        </div>
+
+        {/* Finding detail */}
+        <div style={{
+          background: "rgba(255,255,255,0.03)", border: "1px solid var(--arch-seam)",
+          borderRadius: "8px", padding: "1rem",
+        }}>
+          <p style={{ fontSize: "0.88rem", color: "var(--arch-stone)", lineHeight: 1.65, margin: 0 }}>
+            {finding.detail}
+          </p>
+          {finding.flag && (
+            <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.74rem", color: "var(--arch-amber)", marginTop: "0.75rem", marginBottom: 0 }}>
+              △ {finding.flag}
+            </p>
+          )}
+        </div>
+
+        {/* Evidence */}
+        <div style={{
+          background: "rgba(181,162,104,0.05)", border: "1px solid rgba(181,162,104,0.15)",
+          borderRadius: "8px", padding: "0.85rem 1rem",
+        }}>
+          <span style={{
+            fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.16em",
+            textTransform: "uppercase", color: "var(--arch-fossil)", display: "block", marginBottom: "0.4rem",
+          }}>
+            Evidence
+          </span>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.78rem", color: "var(--arch-parchment)", lineHeight: 1.6, margin: 0 }}>
+            {finding.evidence}
+          </p>
+        </div>
+
+        {/* Linked commits */}
+        {matchedCommits.length > 0 && (
+          <div>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.16em",
+              textTransform: "uppercase", color: "var(--arch-fossil)", display: "block", marginBottom: "0.6rem",
+            }}>
+              Linked commits ({matchedCommits.length})
+            </span>
+            {matchedCommits.map((c) => (
+              <div key={c.sha} style={{
+                border: "1px solid var(--arch-seam)", borderRadius: "8px",
+                padding: "0.75rem 0.9rem", marginBottom: "0.5rem",
+                background: "rgba(255,255,255,0.015)",
+              }}>
+                <p style={{ fontSize: "0.85rem", color: "var(--arch-parchment)", lineHeight: 1.4, marginBottom: "0.35rem" }}>
+                  {c.message.split("\n")[0]}
+                </p>
+                <div style={{ display: "flex", gap: "12px", fontSize: "0.7rem", color: "var(--arch-slate)", fontFamily: "var(--font-mono)" }}>
+                  <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--arch-fossil)", textDecoration: "none" }}>
+                    {c.sha.substring(0, 7)}
+                  </a>
+                  <span>{c.author}</span>
+                  <span>{c.date ? new Date(c.date).toLocaleDateString() : ""}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Linked PRs */}
+        {matchedPRs.length > 0 && (
+          <div>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.16em",
+              textTransform: "uppercase", color: "var(--arch-fossil)", display: "block", marginBottom: "0.6rem",
+            }}>
+              Linked pull requests ({matchedPRs.length})
+            </span>
+            {matchedPRs.map((pr) => (
+              <div key={pr.number} style={{
+                border: "1px solid var(--arch-seam)", borderRadius: "8px",
+                padding: "0.75rem 0.9rem", marginBottom: "0.5rem",
+                background: "rgba(255,255,255,0.015)",
+              }}>
+                <p style={{ fontSize: "0.85rem", color: "var(--arch-parchment)", lineHeight: 1.4, marginBottom: "0.35rem" }}>
+                  {pr.title}
+                </p>
+                {pr.body && (
+                  <p style={{ fontSize: "0.78rem", color: "var(--arch-stone)", lineHeight: 1.5, marginBottom: "0.35rem" }}>
+                    {pr.body.substring(0, 200)}{pr.body.length > 200 ? "…" : ""}
+                  </p>
+                )}
+                <div style={{ fontSize: "0.7rem", color: "var(--arch-slate)", fontFamily: "var(--font-mono)" }}>
+                  #{pr.number} · {pr.user}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {matchedCommits.length === 0 && matchedPRs.length === 0 && (
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--arch-slate)", lineHeight: 1.6 }}>
+            No commits or PRs matched to this finding. Use the evidence signal above as your reference.
+          </p>
+        )}
+
+        {/* Notes field */}
+        <div>
+          <label style={{
+            display: "block", fontFamily: "var(--font-mono)", fontSize: "0.65rem",
+            letterSpacing: "0.16em", textTransform: "uppercase",
+            color: "var(--arch-stone)", marginBottom: "0.5rem",
+          }}>
+            Validation notes <span style={{ color: "#e88080" }}>*</span>
+          </label>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Describe how you verified this finding…"
+            rows={4}
+            style={{
+              width: "100%", boxSizing: "border-box",
+              background: "var(--arch-void)", border: "1px solid var(--arch-seam)",
+              borderRadius: "6px", padding: "0.75rem 0.9rem",
+              fontSize: "0.88rem", color: "var(--arch-parchment)",
+              lineHeight: 1.6, resize: "vertical", outline: "none",
+              fontFamily: "inherit",
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "var(--arch-amethyst)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--arch-seam)")}
+          />
+        </div>
+
+        {/* Acknowledgment checkbox */}
+        <label style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={(e) => setChecked(e.target.checked)}
+            style={{ marginTop: "2px", accentColor: "var(--arch-amethyst)", width: 16, height: 16, flexShrink: 0 }}
+          />
+          <span style={{ fontSize: "0.85rem", color: "var(--arch-stone)", lineHeight: 1.5 }}>
+            I have independently verified this finding and take responsibility for this validation as{" "}
+            <strong style={{ color: "var(--arch-parchment)" }}>{reviewerName}</strong> ({reviewerEmail}).
+          </span>
+        </label>
+
+        {/* Actions */}
+        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+          <button
+            onClick={onClose}
+            style={{
+              fontFamily: "var(--font-mono)", fontSize: "0.72rem", letterSpacing: "0.14em",
+              textTransform: "uppercase", padding: "0.6rem 1.2rem",
+              background: "transparent", border: "1px solid var(--arch-seam)",
+              borderRadius: "6px", color: "var(--arch-slate)", cursor: "pointer",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => canSubmit && onSign(note.trim())}
+            disabled={!canSubmit}
+            style={{
+              fontFamily: "var(--font-mono)", fontSize: "0.72rem", letterSpacing: "0.14em",
+              textTransform: "uppercase", padding: "0.6rem 1.4rem",
+              background: canSubmit ? (isHighRisk ? "#8b3030" : "var(--arch-amethyst)") : "var(--arch-seam)",
+              border: "none", borderRadius: "6px",
+              color: canSubmit ? "var(--arch-parchment)" : "var(--arch-slate)",
+              cursor: canSubmit ? "pointer" : "not-allowed",
+              transition: "background 0.2s",
+            }}
+          >
+            {isHighRisk ? "Confirm validation" : "Validate finding"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function FindingCard({
   f,
   onViewEvidence,
+  signoff,
+  onValidate,
 }: {
   f: Finding;
   onViewEvidence: (f: Finding) => void;
+  signoff?: Signoff;
+  onValidate: (f: Finding) => void;
 }) {
   const badge = BADGE[f.confidence];
   const risk = RISK_BADGE[f.riskLevel ?? "Low"];
+  const isHighRisk = f.riskLevel === "High";
 
   function copyAsPRComment() {
     const lines = [
@@ -296,6 +541,7 @@ function FindingCard({
         borderRight: "1px solid var(--arch-seam)",
         padding: "1.15rem 1.2rem",
         background: "linear-gradient(180deg, rgba(181,162,104,0.04) 0%, transparent 45%)",
+        minWidth: 0,
       }}>
         <span style={{
           display: "block",
@@ -315,6 +561,7 @@ function FindingCard({
           fontWeight: 500,
           color: "var(--arch-parchment)",
           marginBottom: "0.35rem",
+          overflowWrap: "break-word",
         }}>
           {f.title}
         </b>
@@ -323,13 +570,15 @@ function FindingCard({
           fontSize: "0.68rem",
           color: "var(--arch-fossil)",
           opacity: 0.85,
+          overflowWrap: "break-word",
+          wordBreak: "break-all",
         }}>
           {f.evidence}
         </span>
       </div>
 
       {/* Analysis column */}
-      <div style={{ padding: "1.15rem 1.4rem 1.25rem" }}>
+      <div style={{ padding: "1.15rem 1.4rem 1.25rem", minWidth: 0, overflow: "hidden" }}>
         <div style={{
           display: "flex",
           alignItems: "center",
@@ -372,6 +621,7 @@ function FindingCard({
           fontSize: "0.95rem",
           lineHeight: 1.65,
           maxWidth: "60ch",
+          wordBreak: "break-word",
         }}>
           {f.detail}
         </p>
@@ -388,7 +638,7 @@ function FindingCard({
           </p>
         )}
 
-        <div style={{ marginTop: "1.05rem", display: "flex", gap: "1.3rem" }}>
+        <div style={{ marginTop: "1.05rem", display: "flex", gap: "1.3rem", alignItems: "center", flexWrap: "wrap" }}>
           {([
             { label: "View full evidence", action: () => onViewEvidence(f) },
             { label: "Copy as PR comment", action: copyAsPRComment },
@@ -415,13 +665,48 @@ function FindingCard({
               {label}
             </button>
           ))}
+
+          <div style={{ marginLeft: "auto" }}>
+            {signoff ? (
+              <span style={{
+                fontFamily: "var(--font-mono)", fontSize: "0.65rem",
+                letterSpacing: "0.12em", textTransform: "uppercase",
+                color: "var(--arch-mist)",
+                display: "flex", alignItems: "center", gap: "0.4rem",
+              }}>
+                ✓ Validated · {signoff.reviewerName} · {new Date(signoff.timestamp).toLocaleDateString()}
+              </span>
+            ) : (
+              <button
+                onClick={() => onValidate(f)}
+                style={{
+                  fontFamily: "var(--font-mono)", fontSize: "0.65rem",
+                  letterSpacing: "0.14em", textTransform: "uppercase",
+                  padding: "0.35rem 0.85rem",
+                  background: "transparent",
+                  border: `1px solid ${isHighRisk ? "rgba(232,128,128,0.5)" : "rgba(142,108,201,0.4)"}`,
+                  borderRadius: "6px",
+                  color: isHighRisk ? "#e88080" : "var(--arch-lavender)",
+                  cursor: "pointer",
+                  transition: "background 0.18s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = isHighRisk ? "rgba(232,128,128,0.08)" : "rgba(142,108,201,0.08)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                {isHighRisk ? "Review required" : "Validate"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </article>
   );
 }
 
+const SIGNOFF_KEY = "vestige_signoffs";
+
 export default function HistoryPage() {
+  const { data: session } = useSession();
   const [repoUrl, setRepoUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState<string>("");
@@ -430,12 +715,16 @@ export default function HistoryPage() {
   const [activeTier, setActiveTier] = useState<Tier>("all");
   const [showCommits, setShowCommits] = useState(false);
   const [evidenceFinding, setEvidenceFinding] = useState<Finding | null>(null);
+  const [signingFinding, setSigningFinding] = useState<{ finding: Finding; index: number } | null>(null);
+  const [signoffs, setSignoffs] = useState<Record<number, Signoff>>({});
 
   useEffect(() => {
     try {
       const cached = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
       if (cached?.result) setResult(cached.result);
       if (cached?.repoUrl) setRepoUrl(cached.repoUrl);
+      const savedSignoffs = JSON.parse(localStorage.getItem(SIGNOFF_KEY) ?? "{}");
+      setSignoffs(savedSignoffs);
     } catch { /* ignore */ }
   }, []);
 
@@ -504,7 +793,22 @@ export default function HistoryPage() {
     setError(null);
     setRepoUrl("");
     setEvidenceFinding(null);
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+    setSignoffs({});
+    try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(SIGNOFF_KEY); } catch { /* ignore */ }
+  }
+
+  function handleSignoff(index: number, note: string) {
+    const reviewer = session?.user;
+    const signoff: Signoff = {
+      reviewerName: reviewer?.name ?? "Reviewer",
+      reviewerEmail: reviewer?.email ?? "",
+      note,
+      timestamp: new Date().toISOString(),
+    };
+    const updated = { ...signoffs, [index]: signoff };
+    setSignoffs(updated);
+    setSigningFinding(null);
+    try { localStorage.setItem(SIGNOFF_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
   }
 
   /* ── Loading ── */
@@ -729,7 +1033,13 @@ export default function HistoryPage() {
 
         {/* Finding cards */}
         {visibleFindings.map((f, i) => (
-          <FindingCard key={i} f={f} onViewEvidence={setEvidenceFinding} />
+          <FindingCard
+            key={i}
+            f={f}
+            onViewEvidence={setEvidenceFinding}
+            signoff={signoffs[i]}
+            onValidate={(finding) => setSigningFinding({ finding, index: i })}
+          />
         ))}
 
         {visibleFindings.length === 0 && (
@@ -843,6 +1153,19 @@ export default function HistoryPage() {
             commits={commits}
             prs={prs}
             onClose={() => setEvidenceFinding(null)}
+          />
+        )}
+
+        {/* Sign-off modal */}
+        {signingFinding && (
+          <SignoffModal
+            finding={signingFinding.finding}
+            commits={commits}
+            prs={prs}
+            reviewerName={session?.user?.name ?? "Reviewer"}
+            reviewerEmail={session?.user?.email ?? ""}
+            onSign={(note) => handleSignoff(signingFinding.index, note)}
+            onClose={() => setSigningFinding(null)}
           />
         )}
 
