@@ -63,19 +63,28 @@ export default function HomePage() {
               className="text-lg md:text-xl max-w-xl leading-relaxed"
               style={{ color: "#a09a94" }}
             >
-              Full git-history due diligence for PE and growth equity with cited
-              findings, confidence-scored, and signed off before your deal team
+              Full git-history due diligence for PE and growth equity. Findings
+              cited, confidence-scored, and signed off before your deal team
               ever sees them.
             </p>
-            <button
-              className="mt-2 px-8 py-3 rounded-full text-sm font-semibold tracking-wide transition-opacity hover:opacity-80 cursor-pointer"
-              style={{
-                background: "var(--vestige-purple)",
-                color: "var(--vestige-crystal)",
-              }}
-            >
-              Analyze a Target Repo
-            </button>
+            <div className="flex flex-col items-center gap-3 mt-2">
+              <button
+                className="px-8 py-3 rounded-full text-sm font-semibold tracking-wide transition-opacity hover:opacity-80 cursor-pointer"
+                style={{
+                  background: "var(--vestige-purple)",
+                  color: "var(--vestige-crystal)",
+                }}
+              >
+                Request a sample report
+              </button>
+              <a
+                href="/history"
+                className="text-sm transition-opacity hover:opacity-80"
+                style={{ color: "var(--vestige-stone)" }}
+              >
+                Or try the engine on a public repo →
+              </a>
+            </div>
 
             {/* Proof card */}
             <div>
@@ -120,7 +129,7 @@ export default function HomePage() {
               className="text-xs font-mono uppercase tracking-widest"
               style={{ color: "var(--vestige-crystal)" }}
             >
-              Technical Due Diligence — PE &amp; Growth Equity
+              Technical Due Diligence for PE &amp; Growth Equity
             </p>
             <h2
               className="text-4xl md:text-5xl font-bold leading-tight"
@@ -134,9 +143,10 @@ export default function HomePage() {
               style={{ color: "#a09a94" }}
             >
               Vestige reads a target&apos;s full git history and surfaces what
-              actually happened the shortcuts, the deferred fixes, the
-              migrations that quietly stalled with cited evidence and a named
-              human sign-off before any of it reaches your deal team.
+              actually happened: the shortcuts, the deferred fixes, the
+              migrations that quietly stalled. Every finding comes with cited
+              evidence and a named human sign-off before it reaches your deal
+              team.
             </p>
             <div className="flex items-center gap-5 mt-2 flex-wrap">
               <button
@@ -259,7 +269,7 @@ export default function HomePage() {
             }}
           >
             We narrate the history and display all the changes with
-            preliminarily findings, but the story isn&apos;t the risk
+            preliminary findings, but the story isn&apos;t the risk
             assessment.
           </p>
           <p
@@ -331,13 +341,13 @@ export default function HomePage() {
               className="text-xs font-mono uppercase tracking-widest"
               style={{ color: "var(--vestige-stone)" }}
             >
-              Archaeology — why is this code like this?
+              Archaeology: why is this code like this?
             </p>
             <p
               className="text-xs font-mono uppercase tracking-widest"
               style={{ color: "var(--vestige-stone)" }}
             >
-              Risk Surface — where is this codebase fragile?
+              Risk Surface: where is this codebase fragile?
             </p>
 
             {/* Row 2: input cards */}
@@ -447,7 +457,7 @@ export default function HomePage() {
                 className="text-sm leading-relaxed"
                 style={{ color: "#a09a94" }}
               >
-                A null check, a type guard, and an error catch — three patches
+                A null check, a type guard, and an error catch. Three patches
                 in sequence with no commit messages, no PR, no issue. The
                 pattern is consistent with a production incident caused by an
                 unexpected null return in{" "}
@@ -519,6 +529,33 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Data Handling */}
+      <section className="px-6 py-20" style={{ background: "var(--background)" }}>
+        <div className="max-w-2xl mx-auto flex flex-col gap-4">
+          <p
+            className="text-xs font-mono uppercase tracking-widest"
+            style={{ color: "var(--vestige-stone)" }}
+          >
+            Data handling
+          </p>
+          <p className="text-base leading-relaxed" style={{ color: "#a09a94" }}>
+            Vestige connects through GitHub&apos;s read-only OAuth. We never
+            request write access; revoke the grant and our access ends with it.
+            We retain findings, citations, and sign-off records. We do not
+            retain a copy of the repository after analysis completes. Analysis
+            runs on Anthropic&apos;s Claude API; under their commercial terms,
+            inputs and outputs are not used to train models.
+          </p>
+          <p className="text-sm leading-relaxed" style={{ color: "#666" }}>
+            Vestige is an early-stage product. We do not hold SOC 2 or ISO
+            27001 certification and we won&apos;t imply otherwise. What we offer
+            instead is a short, accurate description of exactly where your data
+            goes. If your diligence process requires certified vendors, we&apos;d
+            rather you know that in the first minute than the last.
+          </p>
+        </div>
+      </section>
+
       {/* Sample report CTA */}
       <section
         className="px-6 py-28 text-center"
@@ -544,8 +581,8 @@ export default function HomePage() {
             Send read access to a target&apos;s repository, or run it yourselves
             if your firm prefers to keep access in-house. We&apos;ll turn around
             a sample report with the same confidence tiers, citations, and
-            sign-off layer your deal team would see in production. No slide deck
-            just the report.
+            sign-off layer your deal team would see in production. No slide deck.
+            Just the report.
           </p>
           <div className="flex gap-4 mt-2 flex-wrap justify-center">
             <button

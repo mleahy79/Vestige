@@ -332,7 +332,7 @@ function SignoffModal({
               letterSpacing: "0.18em", textTransform: "uppercase",
               color: "#e88080", marginBottom: "0.6rem",
             }}>
-              ⚠ High risk finding — full review required
+              ⚠ High risk finding: full review required
             </span>
           )}
           <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--arch-parchment)", lineHeight: 1.35, margin: 0 }}>
@@ -531,7 +531,7 @@ function FindingCard({
 
   function copyAsPRComment() {
     const lines = [
-      `**${f.title}** — *${f.confidence} Confidence · ${f.riskLevel ?? "Unknown"} Risk*`,
+      `**${f.title}** | ${f.confidence} Confidence · ${f.riskLevel ?? "Unknown"} Risk`,
       "",
       f.detail,
       "",
@@ -797,7 +797,7 @@ export default function HistoryPage() {
         }
       }
     } catch {
-      setError("Network error — could not reach the server.");
+      setError("Network error: could not reach the server.");
     } finally {
       setLoading(false);
       setStage("");
@@ -859,15 +859,16 @@ export default function HistoryPage() {
               color: "var(--arch-fossil)",
               marginBottom: "2rem",
             }}>
-              Decision Archaeology
+              Live demo: analysis engine
             </span>
             <h1 style={{ fontSize: "2.5rem", fontWeight: 700, color: "var(--arch-parchment)", marginBottom: "12px", lineHeight: 1.2 }}>
-              Why does this<br />
-              <span style={{ color: "var(--arch-lavender)" }}>code exist?</span>
+              Try it on<br />
+              <span style={{ color: "var(--arch-lavender)" }}>any public repo.</span>
             </h1>
             <p style={{ color: "var(--arch-stone)", fontSize: "1.05rem", lineHeight: 1.7 }}>
-              Paste a GitHub repository URL. Vestige reads the full commit history,<br />
-              PRs, and branch patterns — then writes you the story behind the code.
+              Paste a public GitHub repository URL to see the analysis engine in action.
+              This is the same pipeline used in production diligence scans: commit history,
+              PRs, and branch patterns, surfaced as cited findings.
             </p>
           </div>
 
@@ -1028,6 +1029,24 @@ export default function HistoryPage() {
           <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", color: "var(--arch-slate)", marginLeft: "auto", letterSpacing: "0.08em" }}>
             {visibleFindings.length} finding{visibleFindings.length !== 1 ? "s" : ""}
           </span>
+          <a
+            href="/reports"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.68rem",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              border: "1px solid var(--arch-amethyst)",
+              borderRadius: "999px",
+              padding: "0.42rem 0.95rem",
+              color: "var(--arch-lavender)",
+              background: "none",
+              cursor: "pointer",
+              textDecoration: "none",
+            }}
+          >
+            Save as report
+          </a>
           <button
             onClick={reset}
             style={{

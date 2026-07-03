@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vestige",
-  description: "Decision archaeology for codebases you didn't write.",
+  title: "Vestige — Technical Due Diligence for PE & Growth Equity",
+  description: "Full git-history due diligence. Every commit reviewed, findings cited and confidence-scored, signed off before your deal team sees them.",
 };
 
 export default function RootLayout({
