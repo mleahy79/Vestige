@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
+import { clearAnalysisCache } from "@/app/lib/analysis-cache";
 
 const navLinks = [
   { href: "/home", label: "Home" },
@@ -105,7 +106,10 @@ export default function Navbar() {
                       </p>
                     </div>
                     <button
-                      onClick={() => signOut({ callbackUrl: "/home" })}
+                      onClick={() => {
+                        clearAnalysisCache();
+                        signOut({ callbackUrl: "/home" });
+                      }}
                       style={{
                         width: "100%",
                         padding: "10px 14px",

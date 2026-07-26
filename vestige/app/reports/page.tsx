@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ANALYSIS_STORAGE_KEY } from "@/app/lib/analysis-cache";
 
 const CONFIDENCE_TO_TIER = {
   High:   "Bedrock",
@@ -141,7 +142,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     try {
-      const cached = JSON.parse(localStorage.getItem("vestige_archaeology_result") ?? "null");
+      const cached = JSON.parse(sessionStorage.getItem(ANALYSIS_STORAGE_KEY) ?? "null");
       if (cached?.result) setLiveResult(cached.result);
     } catch { /* ignore */ }
   }, []);

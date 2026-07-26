@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { useSession } from "next-auth/react";
+import { ANALYSIS_STORAGE_KEY, SIGNOFF_STORAGE_KEY, clearAnalysisCache } from "@/app/lib/analysis-cache";
 
-const STORAGE_KEY = "vestige_archaeology_result";
+const STORAGE_KEY = ANALYSIS_STORAGE_KEY;
 
 interface RepoInfo {
   full_name: string;
@@ -719,7 +720,7 @@ function FindingCard({
   );
 }
 
-const SIGNOFF_KEY = "vestige_signoffs";
+const SIGNOFF_KEY = SIGNOFF_STORAGE_KEY;
 
 export default function HistoryPage() {
   const { data: session } = useSession();
@@ -736,10 +737,10 @@ export default function HistoryPage() {
 
   useEffect(() => {
     try {
-      const cached = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
+      const cached = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? "null");
       if (cached?.result) setResult(cached.result);
       if (cached?.repoUrl) setRepoUrl(cached.repoUrl);
-      const savedSignoffs = JSON.parse(localStorage.getItem(SIGNOFF_KEY) ?? "{}");
+      const savedSignoffs = JSON.parse(sessionStorage.getItem(SIGNOFF_KEY) ?? "{}");
       setSignoffs(savedSignoffs);
     } catch { /* ignore */ }
   }, []);
@@ -787,7 +788,7 @@ export default function HistoryPage() {
             if (event.stage === "complete" && event.result) {
               setResult(event.result);
               setActiveTier("all");
-              try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ result: event.result, repoUrl: repoUrl.trim() })); } catch { /* ignore */ }
+              try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ result: event.result, repoUrl: repoUrl.trim() })); } catch { /* ignore */ }
             } else if (event.stage === "error") {
               setError(event.message || "Analysis failed");
             } else if (event.message) {
@@ -810,7 +811,7 @@ export default function HistoryPage() {
     setRepoUrl("");
     setEvidenceFinding(null);
     setSignoffs({});
-    try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(SIGNOFF_KEY); } catch { /* ignore */ }
+    clearAnalysisCache();
   }
 
   function handleSignoff(index: number, note: string) {
@@ -824,7 +825,7 @@ export default function HistoryPage() {
     const updated = { ...signoffs, [index]: signoff };
     setSignoffs(updated);
     setSigningFinding(null);
-    try { localStorage.setItem(SIGNOFF_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+    try { sessionStorage.setItem(SIGNOFF_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
   }
 
   /* ── Loading ── */
