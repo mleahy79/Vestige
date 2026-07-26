@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redactSecrets } from "./redact";
 
-function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
+export function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   const trimmed = url.trim().replace(/\.git$/, "");
   try {
     const u = new URL(trimmed);
