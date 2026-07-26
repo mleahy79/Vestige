@@ -27,11 +27,14 @@ export async function POST(request: Request) {
 
   const { owner, repo } = parsed;
 
-  // Prefer the user's OAuth token (private repo access) over the server token
+  // Require an authenticated session — this route calls a paid LLM API and,
+  // via the session token, can read private repo contents. It must never be
+  // reachable anonymously.
   const session = await getServerSession(authOptions);
-  const token =
-    (session as typeof session & { accessToken?: string })?.accessToken ||
-    process.env.GITHUB_TOKEN;
+  const token = (session as typeof session & { accessToken?: string })?.accessToken;
+  if (!token) {
+    return Response.json({ error: "Sign in with GitHub to run an analysis" }, { status: 401 });
+  }
 
   const ghHeaders: Record<string, string> = {
     Accept: "application/vnd.github+json",
