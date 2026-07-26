@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { redactSecrets } from "./redact";
 
 function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   const trimmed = url.trim().replace(/\.git$/, "");
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
         const commitLines = commits
           .slice(0, 100)
           .map((c, i) => {
-            const msg = c.commit.message.split("\n")[0];
+            const msg = redactSecrets(c.commit.message.split("\n")[0]);
             const author = c.commit.author?.name || "Unknown";
             const date = (c.commit.author?.date || "").split("T")[0];
             const header = `[${c.sha.substring(0, 7)}] ${date} ${author}: ${msg}`;
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const fileLines = (detail.files as any[]).slice(0, 5).map((f) => {
               const patch = f.patch
-                ? `\n      ${f.patch.substring(0, 400).replace(/\n/g, "\n      ")}`
+                ? `\n      ${redactSecrets(f.patch.substring(0, 400)).replace(/\n/g, "\n      ")}`
                 : "";
               return `    ${f.status} ${f.filename} (+${f.additions}/-${f.deletions})${patch}`;
             });
@@ -142,7 +143,9 @@ export async function POST(request: Request) {
         const prLines = prs
           .slice(0, 50)
           .map((pr) => {
-            const prBody = pr.body ? pr.body.substring(0, 300).replace(/\r?\n/g, " ") : "(no description)";
+            const prBody = pr.body
+              ? redactSecrets(pr.body.substring(0, 300)).replace(/\r?\n/g, " ")
+              : "(no description)";
             const status = pr.merged_at ? "merged" : "closed";
             return `PR #${pr.number} (${status}) "${pr.title}" by ${pr.user?.login}: ${prBody}`;
           })
@@ -272,7 +275,7 @@ Return a JSON object with this exact shape — no preamble, no markdown fences, 
             },
             commits: commits.slice(0, 100).map((c) => ({
               sha: c.sha,
-              message: c.commit.message,
+              message: redactSecrets(c.commit.message),
               author: c.commit.author?.name,
               date: c.commit.author?.date,
               url: c.html_url,
@@ -280,7 +283,7 @@ Return a JSON object with this exact shape — no preamble, no markdown fences, 
             prs: prs.slice(0, 50).map((pr) => ({
               number: pr.number,
               title: pr.title,
-              body: pr.body,
+              body: pr.body ? redactSecrets(pr.body) : pr.body,
               user: pr.user?.login,
               merged_at: pr.merged_at,
               closed_at: pr.closed_at,
