@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redactSecrets } from "./redact";
+import { checkRateLimit } from "./rate-limit";
 
 export function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   const trimmed = url.trim().replace(/\.git$/, "");
@@ -35,6 +36,15 @@ export async function POST(request: Request) {
   const token = (session as typeof session & { accessToken?: string })?.accessToken;
   if (!token) {
     return Response.json({ error: "Sign in with GitHub to run an analysis" }, { status: 401 });
+  }
+
+  const rateLimitKey = session?.user?.email || token;
+  const { allowed, retryAfterSeconds } = checkRateLimit(rateLimitKey);
+  if (!allowed) {
+    return Response.json(
+      { error: "Too many analyses. Try again in a few minutes." },
+      { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
+    );
   }
 
   const ghHeaders: Record<string, string> = {
