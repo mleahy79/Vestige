@@ -16,7 +16,7 @@ that shaped it.
 
 ## Tech stack
 
-Next.js · TypeScript · Firebase · Stripe · Redux Toolkit · Vercel
+Next.js · TypeScript · Tailwind CSS · NextAuth · Claude API (@anthropic-ai/sdk) · Vercel
 
 ## Status
 
