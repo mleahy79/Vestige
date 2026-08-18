@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 import { ANALYSIS_STORAGE_KEY } from "@/app/lib/analysis-cache";
 
 const CONFIDENCE_TO_TIER = {
@@ -137,15 +137,25 @@ const RISK_COLOR = {
   Low:    "#7f8c8d",
 } as const;
 
-export default function ReportsPage() {
-  const [liveResult, setLiveResult] = useState<LiveResult | null>(null);
+function subscribeToCachedResult() {
+  return () => {};
+}
 
-  useEffect(() => {
-    try {
-      const cached = JSON.parse(sessionStorage.getItem(ANALYSIS_STORAGE_KEY) ?? "null");
-      if (cached?.result) setLiveResult(cached.result);
-    } catch { /* ignore */ }
-  }, []);
+function getCachedResult(): LiveResult | null {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(ANALYSIS_STORAGE_KEY) ?? "null");
+    return cached?.result ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function getServerCachedResult(): LiveResult | null {
+  return null;
+}
+
+export default function ReportsPage() {
+  const liveResult = useSyncExternalStore(subscribeToCachedResult, getCachedResult, getServerCachedResult);
 
   const isLive = liveResult !== null;
 

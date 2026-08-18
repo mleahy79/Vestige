@@ -736,8 +736,13 @@ export default function HistoryPage() {
   const [signoffs, setSignoffs] = useState<Record<number, Signoff>>({});
 
   useEffect(() => {
+    // One-time hydration from sessionStorage on mount: initial state is empty on
+    // both server and client, so this can't cause a hydration mismatch, and result/
+    // repoUrl/signoffs are independently mutated elsewhere so this can't be modeled
+    // as a single useSyncExternalStore.
     try {
       const cached = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? "null");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (cached?.result) setResult(cached.result);
       if (cached?.repoUrl) setRepoUrl(cached.repoUrl);
       const savedSignoffs = JSON.parse(sessionStorage.getItem(SIGNOFF_KEY) ?? "{}");
