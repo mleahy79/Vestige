@@ -180,7 +180,7 @@ export default function HomePage() {
           <div className="flex flex-col gap-3">
             <p
               className="text-xs font-mono uppercase tracking-widest mb-1"
-              style={{ color: "#555" }}
+              style={{ color: "#a09a94" }}
             >
               What the data room shows you
             </p>
@@ -219,7 +219,7 @@ export default function HomePage() {
                     </p>
                     <p
                       className="text-sm mt-0.5"
-                      style={{ color: "rgba(255,255,255,0.65)" }}
+                      style={{ color: "rgba(255,255,255,0.80)" }}
                     >
                       {desc}
                     </p>
@@ -238,7 +238,7 @@ export default function HomePage() {
             </div>
             <p
               className="text-sm leading-relaxed mt-1"
-              style={{ color: "#555" }}
+              style={{ color: "#a09a94" }}
             >
               What Vestige shows you: everything underneath, scored by how deep
               the evidence goes.
@@ -298,7 +298,10 @@ export default function HomePage() {
         <div className="max-w-2xl mx-auto flex flex-col items-center gap-8">
           <p
             className="text-xs font-mono uppercase tracking-widest"
-            style={{ color: "#8e6cc9" }}
+            // Amethyst carries two tints: no single mid-purple clears 4.5:1 on
+            // both the light band and the dark panels. This is the light-surface
+            // step (5.29:1 on #f5f3f0); the dark one is #9b7ad2.
+            style={{ color: "#7650b5" }}
           >
             What we do, and what we don&apos;t
           </p>
@@ -314,7 +317,7 @@ export default function HomePage() {
           </h2>
           <p
             className="text-base leading-relaxed max-w-xl"
-            style={{ color: "#888" }}
+            style={{ color: "#6b655f" }}
           >
             No tool can responsibly predict whether an acquisition will perform,
             and we&apos;re not going to claim Vestige is the exception. What we
@@ -419,7 +422,7 @@ export default function HomePage() {
                   "last 3 authors no longer active",
                   "...",
                 ].map((line) => (
-                  <span key={line} style={{ color: "#444" }}>
+                  <span key={line} style={{ color: "#a09a94" }}>
                     {line}
                   </span>
                 ))}
@@ -552,7 +555,7 @@ export default function HomePage() {
             runs on Anthropic&apos;s Claude API; under their commercial terms,
             inputs and outputs are not used to train models.
           </p>
-          <p className="text-sm leading-relaxed" style={{ color: "#666" }}>
+          <p className="text-sm leading-relaxed" style={{ color: "#a09a94" }}>
             Vestige is an early-stage product. We do not hold SOC 2 or ISO
             27001 certification and we won&apos;t imply otherwise. What we offer
             instead is a short, accurate description of exactly where your data
@@ -570,7 +573,8 @@ export default function HomePage() {
         <div className="max-w-xl mx-auto flex flex-col items-center gap-6">
           <p
             className="text-xs font-mono uppercase tracking-widest"
-            style={{ color: "#8e6cc9" }}
+            // Dark-surface amethyst (5.20:1 on #1a1428); see #7650b5 above.
+            style={{ color: "#9b7ad2" }}
           >
             Get a sample report
           </p>
