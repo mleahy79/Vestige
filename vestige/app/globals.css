@@ -14,7 +14,8 @@
   --arch-seam: #2a2435;
   --arch-parchment: #eae6dd;
   --arch-stone: #9b94a4;
-  --arch-slate: #6b6477;
+  /* #6b6477 measured 3.44:1 on --arch-void; lightened to clear 4.5:1 */
+  --arch-slate: #858094;
   --arch-lavender: #d9c7f2;
   --arch-amethyst: #8e6cc9;
   --arch-fossil: #b5a268;
@@ -25,14 +26,28 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+}
+
+/* next/font declares --font-mono on <body>, so the utility has to read it from
+   there. The previous @theme mapping pointed at --font-geist-mono, which
+   nothing defines, so every `font-mono` class silently fell back to Arial. */
+@layer utilities {
+  .font-mono {
+    font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Set by the pre-paint probe in layout.tsx when a cached analysis exists, so
+   /history doesn't paint the empty input form and then swap it for the report.
+   visibility (not display) keeps the reserved space, so nothing reflows. */
+html[data-restoring] #history-root {
+  visibility: hidden;
 }
 
 @keyframes fadeInUp {
