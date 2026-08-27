@@ -43,8 +43,14 @@ export default function HomePage() {
                 fill="none"
               />
             </svg>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="hero-mark-fill" src="/v-mark.png" alt="Vestige" />
+            <Image
+              className="hero-mark-fill"
+              src="/v-mark.png"
+              alt=""
+              width={156}
+              height={131}
+              priority
+            />
           </div>
 
           {/* Headline + subhead + CTA + proof card all reveal together */}

@@ -2,9 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import dynamic from "next/dynamic";
 import { useSession } from "next-auth/react";
 import { ANALYSIS_STORAGE_KEY, SIGNOFF_STORAGE_KEY, clearAnalysisCache } from "@/app/lib/analysis-cache";
+
+// ~92 KB of player + WASM that is only ever mounted while an analysis is
+// running. Loading it lazily keeps it out of the initial /history bundle.
+const DotLottieReact = dynamic(
+  () => import("@lottiefiles/dotlottie-react").then((m) => m.DotLottieReact),
+  { ssr: false, loading: () => <div style={{ width: 220, height: 220, margin: "0 auto" }} /> },
+);
 
 const STORAGE_KEY = ANALYSIS_STORAGE_KEY;
 
@@ -93,6 +100,14 @@ const RISK_BADGE = {
 } as const;
 
 const TIER_MAP: Record<string, Tier> = { High: "hi", Medium: "md", Low: "lo" };
+
+// Links sitting inline beside plain text need a non-colour cue to be
+// distinguishable; a dimmed underline reads as restrained but passes.
+const INLINE_LINK = {
+  textDecoration: "underline",
+  textDecorationColor: "rgba(255,255,255,0.28)",
+  textUnderlineOffset: "3px",
+} as const;
 
 function matchEvidence(evidenceStr: string, commits: Commit[], prs: PR[]) {
   const shaPatterns = (evidenceStr.match(/\b[0-9a-f]{7,40}\b/gi) || [])
@@ -219,7 +234,7 @@ function EvidencePanel({
                   {c.message.split("\n")[0]}
                 </p>
                 <div style={{ display: "flex", gap: "12px", fontSize: "0.7rem", color: "var(--arch-slate)", fontFamily: "var(--font-mono)" }}>
-                  <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--arch-fossil)", textDecoration: "none" }}>
+                  <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--arch-fossil)", ...INLINE_LINK }}>
                     {c.sha.substring(0, 7)}
                   </a>
                   <span>{c.author}</span>
@@ -256,7 +271,7 @@ function EvidencePanel({
                   </span>
                   <a
                     href={pr.url} target="_blank" rel="noopener noreferrer"
-                    style={{ color: "var(--arch-parchment)", fontSize: "0.85rem", textDecoration: "none", lineHeight: 1.4 }}
+                    style={{ color: "var(--arch-parchment)", fontSize: "0.85rem", lineHeight: 1.4, ...INLINE_LINK }}
                   >
                     {pr.title}
                   </a>
@@ -391,7 +406,7 @@ function SignoffModal({
                   {c.message.split("\n")[0]}
                 </p>
                 <div style={{ display: "flex", gap: "12px", fontSize: "0.7rem", color: "var(--arch-slate)", fontFamily: "var(--font-mono)" }}>
-                  <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--arch-fossil)", textDecoration: "none" }}>
+                  <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--arch-fossil)", ...INLINE_LINK }}>
                     {c.sha.substring(0, 7)}
                   </a>
                   <span>{c.author}</span>
@@ -748,6 +763,9 @@ export default function HistoryPage() {
       const savedSignoffs = JSON.parse(sessionStorage.getItem(SIGNOFF_KEY) ?? "{}");
       setSignoffs(savedSignoffs);
     } catch { /* ignore */ }
+    // Reveal whatever the restore settled on. Cleared unconditionally so a
+    // failed/empty read can never leave the page permanently hidden.
+    document.documentElement.removeAttribute("data-restoring");
   }, []);
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -836,7 +854,7 @@ export default function HistoryPage() {
   /* ── Loading ── */
   if (loading) {
     return (
-      <main style={{ minHeight: "100vh", background: "var(--arch-void)", color: "var(--arch-parchment)" }}>
+      <main id="history-root" style={{ minHeight: "100vh", background: "var(--arch-void)", color: "var(--arch-parchment)" }}>
         <div style={{ maxWidth: "800px", margin: "0 auto", padding: "80px 24px", textAlign: "center" }}>
           <DotLottieReact src="/loading.lottie" loop autoplay style={{ width: 220, height: 220, margin: "0 auto" }} />
           <h2 style={{ fontFamily: "var(--font-mono)", fontSize: "1rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--arch-lavender)", marginBottom: "12px" }}>
@@ -853,7 +871,7 @@ export default function HistoryPage() {
   /* ── Input form ── */
   if (!result) {
     return (
-      <main style={{ minHeight: "100vh", background: "var(--arch-void)", color: "var(--arch-parchment)" }}>
+      <main id="history-root" style={{ minHeight: "100vh", background: "var(--arch-void)", color: "var(--arch-parchment)" }}>
         <div style={{ maxWidth: "720px", margin: "0 auto", padding: "80px 24px" }}>
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
             <span style={{
@@ -946,7 +964,7 @@ export default function HistoryPage() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "var(--arch-void)", color: "var(--arch-parchment)" }}>
+    <main id="history-root" style={{ minHeight: "100vh", background: "var(--arch-void)", color: "var(--arch-parchment)" }}>
       <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "clamp(1.25rem, 3vw, 2.5rem)" }}>
 
         {/* Dig summary */}
@@ -976,7 +994,7 @@ export default function HistoryPage() {
                 href={repo.html_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: "var(--arch-fossil)", textDecoration: "none" }}
+                style={{ color: "var(--arch-fossil)", ...INLINE_LINK }}
               >
                 {repo.full_name}
               </a>
@@ -1246,7 +1264,7 @@ export default function HistoryPage() {
                         {c.message.split("\n")[0]}
                       </p>
                       <div style={{ display: "flex", gap: "12px", fontSize: "0.72rem", color: "var(--arch-slate)", fontFamily: "var(--font-mono)" }}>
-                        <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--arch-fossil)", textDecoration: "none" }}>
+                        <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--arch-fossil)", ...INLINE_LINK }}>
                           {c.sha.substring(0, 7)}
                         </a>
                         <span>{c.author}</span>
@@ -1274,7 +1292,7 @@ export default function HistoryPage() {
                         }}>
                           {pr.merged_at ? "merged" : "closed"}
                         </span>
-                        <a href={pr.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--arch-parchment)", fontSize: "0.85rem", textDecoration: "none", lineHeight: 1.4 }}>
+                        <a href={pr.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--arch-parchment)", fontSize: "0.85rem", lineHeight: 1.4, ...INLINE_LINK }}>
                           {pr.title}
                         </a>
                       </div>
