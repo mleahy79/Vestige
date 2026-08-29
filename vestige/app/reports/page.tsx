@@ -141,13 +141,28 @@ function subscribeToCachedResult() {
   return () => {};
 }
 
+// useSyncExternalStore compares snapshots by identity and re-renders until two
+// consecutive reads match. Parsing on every call returns a fresh object each
+// time, which never settles — so memoise on the raw string and only re-parse
+// when the stored JSON actually changes.
+let cachedRaw: string | null = null;
+let cachedResult: LiveResult | null = null;
+
 function getCachedResult(): LiveResult | null {
+  let raw: string | null;
   try {
-    const cached = JSON.parse(sessionStorage.getItem(ANALYSIS_STORAGE_KEY) ?? "null");
-    return cached?.result ?? null;
+    raw = sessionStorage.getItem(ANALYSIS_STORAGE_KEY);
   } catch {
     return null;
   }
+  if (raw === cachedRaw) return cachedResult;
+  cachedRaw = raw;
+  try {
+    cachedResult = JSON.parse(raw ?? "null")?.result ?? null;
+  } catch {
+    cachedResult = null;
+  }
+  return cachedResult;
 }
 
 function getServerCachedResult(): LiveResult | null {
